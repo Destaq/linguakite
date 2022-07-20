@@ -3,22 +3,29 @@ export default {
   head: {
     titleTemplate: "%s | LinguaKite",
     htmlAttrs: {
-      lang: "en"
+      lang: "en",
     },
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { hid: "description", name: "description", content: "LinguaKite is an innovative new language-learning platform that teaches you through machine learning and literature." },
-      { name: "format-detection", content: "telephone=no" }
+      {
+        hid: "description",
+        name: "description",
+        content:
+          "LinguaKite is an innovative new language-learning platform that teaches you through machine learning and literature.",
+      },
+      { name: "format-detection", content: "telephone=no" },
     ],
-    link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }]
+    link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
-  plugins: [],
+  plugins: [
+    { src: "~/plugins/axios", mode: "client" },
+  ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
@@ -26,14 +33,19 @@ export default {
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/tailwindcss
-    "@nuxtjs/tailwindcss"
+    "@nuxtjs/tailwindcss",
   ],
+
+  server: {
+    port: 3000,
+    host: "127.0.0.1", // run on this port so that cookies are set
+  },
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     // https://go.nuxtjs.dev/axios
     "@nuxtjs/axios",
-    "@nuxtjs/auth-next"
+    "@nuxtjs/auth-next",
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
@@ -43,9 +55,9 @@ export default {
     credentials: true,
     headers: {
       common: {
-        "Content-Type": "application/json"
-      }
-    }
+        "Content-Type": "application/json",
+      },
+    },
   },
 
   // TODO: figure out (refresh) token and whatnot conflicts
@@ -54,7 +66,7 @@ export default {
     redirect: {
       login: "/login",
       logout: "/login",
-      callback: "/login"
+      callback: "/login",
     },
     strategies: {
       local: false,
@@ -62,21 +74,20 @@ export default {
         token: {
           property: "token",
           required: true,
-          type: "Bearer"
+          type: "Bearer",
         },
         user: {
           property: "user",
-          autoFetch: true
+          autoFetch: true,
         },
         endpoints: {
           login: { url: "/api/auth/login", method: "post" },
           logout: { url: "/api/auth/logout", method: "post" },
-          user: { url: "/api/auth/user", method: "get" }
-        }
-      }
-    }
+          user: { url: "/api/auth/user", method: "get" },
+        },
+      },
+    },
   },
-
   // Build Configuration: https://go.nuxtjs.dev/config-build
-  build: {}
+  build: {},
 };

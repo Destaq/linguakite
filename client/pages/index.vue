@@ -2,6 +2,7 @@
   <div>
     <div v-if="$auth.loggedIn">
       <p>Welcome logged in user!</p>
+      <button @click="sendReq" class="btn">Click Me!</button>
     </div>
     <div v-else>
       <p>Please sign up or log in...</p>
@@ -13,8 +14,13 @@
 export default {
   head() {
     return {
-      title: "Home"
+      title: "Home",
     };
+  },
+  methods: {
+    async sendReq() {
+      await this.$axios.get("/api/auth/test");
+    },
   },
 };
 </script>

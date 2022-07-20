@@ -8,8 +8,10 @@ from flask_jwt_extended import (
     current_user,
     jwt_required,
     get_jwt_identity,
-    get_jwt_header
+    get_jwt_header,
+    get_jwt
 )
+from datetime import datetime, timedelta, timezone
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -61,6 +63,14 @@ def logout():
     response = jsonify(message="Logged out")
     unset_jwt_cookies(response)
     return response, 200
+
+@auth_bp.route("/test", methods=["GET"])
+@jwt_required()
+def this_is_a_test():
+    """
+    This method demonstrates that you can re-set the JWT cookie on-click.
+    """
+    return jsonify(message="OK"), 200
 
 
 @auth_bp.route("/user", methods=["GET"])

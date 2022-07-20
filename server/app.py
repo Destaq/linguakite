@@ -52,19 +52,29 @@ def create_app():
 
 
 
-    # cookie scheme auto-refresh, note that conflicts with nuxt-auth for the moment
+    # cookie scheme auto-refresh
     # NOTE: mention for my post; complexity point
     @app.after_request
     def refresh_expiring_jwts(response):
+        """
+        Here we are supporting the implicit cookie refresh mechanism.
+
+        If a not-yet-expired access cookie (token) is sent with a request, it will be replaced
+        with one that is newly created, also for two weeks.
+
+        (Note that this will not work just by opening the app, the user also needs to do some actions).
+        """
         try:
             exp_timestamp = get_jwt()["exp"]
             now = datetime.now(timezone.utc)
-            target_timestamp = datetime.timestamp(now + timedelta(days=2))
+            target_timestamp = datetime.timestamp(now + timedelta(days=7))
             if target_timestamp > exp_timestamp:
                 access_token = create_access_token(identity=get_jwt_identity())
-                set_access_cookies(response, access_token)
+                access_token = "Bearer " + access_token
+                response.set_cookie("auth._token.cookie", access_token, samesite="None", secure=True)  # latter two required to actually set 
+                # set_access_cookies(response, access_token)
             return response
-        except (RuntimeError, KeyError):
+        except (RuntimeError, KeyError) as e:
             # Case where there is not a valid JWT. Just return the original respone
             return response
         
