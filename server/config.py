@@ -13,7 +13,7 @@ class Config(object):
     JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_CSRF_PROTECT = False  # True in production, only due to Nuxt-auth calamity
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=14)
 
 
 class ProductionConfig(Config):
