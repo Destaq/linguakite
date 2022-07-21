@@ -8,7 +8,7 @@
         >
           <NuxtLink to="/" class="bg-white text-black font-bold text-xl p-4">
             <img src="/logo_transparent.svg" class="w-6 mr-2 inline" />
-            <span class="align-text-top"> SurgeLingo </span>
+            <span class="align-text-top"> LinguaKite </span>
           </NuxtLink>
         </div>
 
