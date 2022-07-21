@@ -15,8 +15,12 @@ from flask_jwt_extended import (
 
 # import blueprints
 from blueprints.auth import auth_bp
+from blueprints.vocab import vocab_bp
 
 # other imports for flask-migrate
+from models.user import User
+from models.word import Word
+from models.user_word_association import UserWord
 
 
 load_dotenv()
@@ -50,8 +54,6 @@ def create_app():
         identity = jwt_data["sub"]
         return User.query.filter_by(id=identity).one_or_none()
 
-
-
     # cookie scheme auto-refresh
     # NOTE: mention for my post; complexity point
     @app.after_request
@@ -80,4 +82,5 @@ def create_app():
         
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(vocab_bp, url_prefix="/api")
     return app
