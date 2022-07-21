@@ -60,7 +60,6 @@ export default {
     },
   },
 
-  // TODO: figure out (refresh) token and whatnot conflicts
   auth: {
     localStorage: false,
     redirect: {
@@ -85,6 +84,9 @@ export default {
           logout: { url: "/api/auth/logout", method: "post" },
           user: { url: "/api/auth/user", method: "get" },
         },
+        options: {
+          expires: 14,
+        }
       },
     },
   },
