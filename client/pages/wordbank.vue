@@ -8,12 +8,12 @@
           <input class="btn" type="submit" value="Go" />
         </div>
         <div class="mt-1 text-sm text-gray-500">
-          Upload an estimate of how much English vocabulary you know (via a tool such as
-          <a href="https://mikeinnes.io/2022/02/26/vocab" class="link link-primary" target="_blank">this one</a>).
+          Upload an estimate of your English vocab size (via a tool such as
+          <a href="https://mikeinnes.io/2022/02/26/vocab" class="link link-primary" target="_blank">this</a>).
           <span class="label-text">
             <span class="tooltip tooltip-right cursor-pointer"
               data-tip="We'll use this to populate your wordbank automatically.">
-              <span class="italic text-gray-500">(What's this?)</span>
+              <span class="italic text-gray-500">(Why?)</span>
             </span>
           </span>
         </div>
@@ -29,20 +29,23 @@
             aria-describedby="user_help" id="user_avatar" type="file">
           <input type="submit" class="btn" />
         </div>
-        <div class="mt-1 text-sm text-gray-500" id="user_help">You can also upload a newline seperated <span
+        <div class="mt-1 text-sm text-gray-500" id="user_help">You can also upload a newline separated <span
             class="text-xs font-mono">.txt</span> file of your known words.</div>
       </form>
     </div>
 
-    <!-- (upload single word?) -->
-
     <!-- (wordbank table) -->
-    <WordbankTable />
+    <WordbankTable ref="wordbankTable" class="mt-4" />
   </div>
 </template>
 
 <script>
 export default {
+  head() {
+    return {
+      title: "Wordbank",
+    };
+  },
   data() {
     return {
       vocabEstimate: null,
@@ -56,16 +59,15 @@ export default {
       });
       this.vocabEstimate = null;
 
-      // TODO: reload wordbank
+      this.$refs.wordbankTable.renderWordbank(1);
     },
     async uploadWordList() {
-      console.log("SUCCESS!")
-      await this.$axios.post("/api/update-vocab-estimate", {
+      await this.$axios.post("/api/upload-vocab-file", {
         vocab_size: this.vocabEstimate,
       });
       this.vocabEstimate = null;
 
-      // TODO: reload wordbank
+      this.$refs.wordbankTable.renderWordbank(1);
     }
   }
 }

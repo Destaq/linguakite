@@ -10,6 +10,10 @@ class Word(db.Model):
 
     # NOTE: definition will be taken from https://dictionaryapi.dev/ without DB entry
     # NOTE: translation will be taken from https://www.deepl.com/pro-api?cta=header-pro-api/ without DB entry
+    # the above two notes are only for when a single one is being clicked
+
+    # for one we are grabbing multiple ones, where we don't care as much for the definition
+    # then we will use some Python libraries
 
     users = db.relationship("UserWord", back_populates="word")
 

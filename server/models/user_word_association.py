@@ -18,7 +18,7 @@ class UserWord(db.Model):
 
     number_of_times_seen = db.Column(db.Integer, index=True, nullable=False)
 
-    def __init__(self, user, word, number_of_times_seen):
-        self.user_id = user.id
-        self.word_id = word.id
+    def __init__(self, user_id, word_id, number_of_times_seen):
+        self.user_id = user_id
+        self.word_id = word_id
         self.number_of_times_seen = number_of_times_seen
