@@ -251,3 +251,47 @@ def fetch_wordbank():
 
     # return success message + data
     return jsonify({"success": True, "words": user_words, "total_elements": total_elements})
+
+
+
+# this is a one-off function that will be used to update the database
+# and then later commented out
+import csv
+import ast
+from models.tag import Tag
+from models.text import Text, text_tag_association_table
+
+@vocab_bp.route("/update-database-with-medium", methods=["GET"])
+def update_db_with_medium():
+    with open("/Users/simonilincev/Desktop/School/IA/CS/Code/linguakite/server/data/medium_articles.csv") as file:
+        reader = csv.reader(file)
+        i = 1
+        for row in reader:
+            print(f"{i:06d}" + " ----- ", end="\r")
+            if row[0] == "title":
+                # skip the first line
+                continue
+            else:
+                text = Text(title=row[0], content=row[1], url=row[2], authors=row[3], date=row[4])
+                db.session.add(text)
+                db.session.commit()
+                tags = ast.literal_eval(row[5])
+
+                for tag in tags:
+                    # check if tag in db already
+                    if Tag.query.filter_by(name=tag).first() is None:
+                        tag_link = Tag(name=tag)
+                        db.session.add(tag_link)
+                        db.session.commit()
+                    else:
+                        tag_link = Tag.query.filter_by(name=tag).first()
+
+                    # now add them as relevant tags and texts to each other
+                    tag_link.texts.append(text)
+                    text.tags.append(tag_link)
+                    db.session.commit()
+
+            i += 1
+        
+        print("\n")
+        return jsonify({"success": True})

@@ -5,6 +5,12 @@ import string
 
 nlp = spacy.load("en_core_web_sm")
 
+text_tag_association_table = db.Table(
+    "text_tag_association",
+    db.Column("text_id", db.Integer, db.ForeignKey("text.id"), primary_key=True),
+    db.Column("tag_id", db.Integer, db.ForeignKey("tag.id"), primary_key=True),
+)
+
 
 class Text(db.Model):
     """
@@ -20,8 +26,8 @@ class Text(db.Model):
     __tablename__ = "text"
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(64), index=True, unique=True)
-    text = db.Column(db.String, nullable=False)
+    title = db.Column(db.String, index=True)
+    content = db.Column(db.String, nullable=False)
     url = db.Column(db.String, nullable=True)
     authors = db.Column(db.String, nullable=True)  # just concatenate the list of names
     date = db.Column(db.DateTime, nullable=True)
@@ -33,18 +39,18 @@ class Text(db.Model):
     unique_words = db.Column(db.Integer, nullable=False)
     average_sentence_length = db.Column(db.Float, nullable=False)
     average_word_length = db.Column(db.Float, nullable=False)
-    lemmatized_text = db.Column(
+    lemmatized_content = db.Column(
         db.String, nullable=False
     )  # used for 'percentage words/content known'
     total_words = db.Column(db.Integer, nullable=False)
 
     # finally we have tags, which have a many-many relationship to this model
-    tags = db.relationship("TextTag", back_populates="text")
+    tags = db.relationship("Tag", secondary=text_tag_association_table, back_populates="texts")
     users = db.relationship("UserText", back_populates="text")
 
-    def __init__(self, title, text, url, authors, date):
+    def __init__(self, title, content, url, authors, date):
         self.title = title
-        self.text = text
+        self.content = content
         self.url = url
         self.date = date
 
@@ -59,16 +65,16 @@ class Text(db.Model):
             self.authors = "{}, and {}".format(", ".join(authors[:-1]), authors[-1])
 
         # now the 'special' details
-        self.total_pages = self.calculate_total_pages(text)
+        self.total_pages = self.calculate_total_pages(content)
         self.average_sentence_length = self.calculate_average_sentence_length(
-            text
+            content
         )
-        self.average_word_length = self.calculate_average_word_length(text)
-        self.total_words = len(text.split())
-        self.lemmatized_text = self.lemmatize_text(text)
-        self.unique_words = self.calculate_unique_words(self.lemmatized_text)
+        self.average_word_length = self.calculate_average_word_length(content)
+        self.total_words = len(content.split())
+        self.lemmatized_content = self.lemmatize_content(content)
+        self.unique_words = self.calculate_unique_words(self.lemmatized_content)
 
-    def calculate_total_pages(self, text):
+    def calculate_total_pages(self, content):
         """
         Each one of these will equate to one page on the screen.
 
@@ -82,7 +88,7 @@ class Text(db.Model):
         """
 
         # first of all, split the text into words
-        words = text.split()
+        words = content.split()
 
         # now create the chunks
         chunk_count = 0
@@ -104,13 +110,13 @@ class Text(db.Model):
 
         return chunk_count
 
-    def calculate_average_sentence_length(self, text):
+    def calculate_average_sentence_length(self, content):
         """
         Calculate the average sentence length.
         """
 
         # first of all, split the text into sentences
-        sentences = text.split(". ")
+        sentences = content.split(". ")
 
         # now calculate the average sentence length
         total_length = 0
@@ -119,13 +125,13 @@ class Text(db.Model):
 
         return total_length / len(sentences)
 
-    def calculate_average_word_length(self, text):
+    def calculate_average_word_length(self, content):
         """
         Calculate the average word length.
         """
 
         # first of all, split the text into words
-        words = text.split()
+        words = content.split()
 
         # now calculate the average word length
         total_length = 0
@@ -134,23 +140,25 @@ class Text(db.Model):
 
         return total_length / len(words)
 
-    def lemmatize_text(self, text):
+    def lemmatize_content(self, content):
         """
         Lemmatize the text. This is just used for calculating the percentage of words that are known and unique words, so no need to preserve punctuation.
         """
 
         # lemmatize the words
-        lemmatized_text = nlp(text)
+        lemmatized_text = nlp(content)
         final_text = ""
         for word in lemmatized_text:
             if word.lemma_ not in string.punctuation and word.lemma_.isspace() == False:
                 final_text += word.lemma_ + " "
 
+        print(final_text)
+
         return final_text
 
-    def calculate_unique_words(self, lemmatized_text):
+    def calculate_unique_words(self, lemmatized_content):
         # first of all, split the text into words
-        words = lemmatized_text.split()
+        words = lemmatized_content.split()
 
         # now create the chunks
         unique_words = set()

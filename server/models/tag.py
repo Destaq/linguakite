@@ -1,5 +1,5 @@
 from extensions import db
-
+from models.text import text_tag_association_table
 
 class Tag(db.Model):
     """
@@ -10,7 +10,7 @@ class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, index=True)
 
-    texts = db.relationship("TextTag", back_populates="tag")
+    texts = db.relationship("Text", secondary=text_tag_association_table, back_populates="tags")
 
     def __init__(self, name):
         self.name = name

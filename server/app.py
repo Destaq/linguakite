@@ -25,7 +25,7 @@ from models.tag import Tag
 
 from models.associations.user_word import UserWord
 from models.associations.user_text import UserText
-from models.associations.text_tag import TextTag
+from models.text import text_tag_association_table
 
 load_dotenv()
 
