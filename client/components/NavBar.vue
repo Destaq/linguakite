@@ -45,6 +45,7 @@
 
       <!-- if authenticated -->
       <div v-else>
+        <button class="btn btn-square">+</button>
         <button class="btn btn-sm btn-error w-28" @click="logOut">
           Log Out
         </button>
