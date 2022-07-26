@@ -20,8 +20,12 @@ from blueprints.vocab import vocab_bp
 # other imports for flask-migrate
 from models.user import User
 from models.word import Word
-from models.user_word_association import UserWord
+from models.text import Text
+from models.tag import Tag
 
+from models.associations.user_word import UserWord
+from models.associations.user_text import UserText
+from models.associations.text_tag import TextTag
 
 load_dotenv()
 

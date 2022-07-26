@@ -35,7 +35,7 @@
     </div>
 
     <!-- (wordbank table) -->
-    <WordbankTable ref="wordbankTable" class="mt-4" />
+    <WordbankTable ref="wordbankTable" class="mt-2" />
   </div>
 </template>
 

@@ -7,7 +7,7 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from models.user import User
 from models.word import Word
-from models.user_word_association import UserWord
+from models.associations.user_word import UserWord
 from flask_jwt_extended import (
     unset_jwt_cookies,
     create_access_token,
