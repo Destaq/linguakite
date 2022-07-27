@@ -2,7 +2,7 @@
   <div class="flex min-h-screen flex-col">
     <NavBar class="top-0 z-50 sticky" />
     <Nuxt
-      class="flex-grow px-4 sm:w-xl md:w-full lg:w-screen-xl mb-4 mt-2"
+      class="flex-grow px-4 sm:w-xl md:w-full lg:w-screen-xl my-4"
     />
   </div>
 </template>

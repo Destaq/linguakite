@@ -42,7 +42,7 @@
         </tr>
       </tbody>
     </table>
-    <div class="btn-group justify-center gap-x-0.5">
+    <div class="btn-group justify-center gap-x-0.5 mt-4">
       <button class="btn btn-sm" :class="currentPage <= 1 ? 'btn-disabled' : ''"
         @click="renderWordbank(currentPage - 1)">«</button>
       <button class="btn w-1/3 btn-sm">Page {{ currentPage }}</button>

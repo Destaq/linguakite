@@ -45,8 +45,9 @@
 
       <!-- if authenticated -->
       <div v-else>
-        <button class="btn btn-square">+</button>
-        <button class="btn btn-sm btn-error w-28" @click="logOut">
+        <!-- TODO: below button opens up 'document upload' modal (copy & paste in content, then add title + tags, rest done automatically) -->
+        <button class="btn btn-circle btn-outline btn-sm mr-5 btn-neutral">+</button>
+        <button class="btn btn-sm btn-error w-28 mr-2" @click="logOut">
           Log Out
         </button>
       </div>
