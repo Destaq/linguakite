@@ -20,7 +20,6 @@ textbank_bp = Blueprint("textbank", __name__)
 
 # two routes in databasetable + one route for adding custom file
 @textbank_bp.route("/fetch-textbank", methods=["GET"])
-@jwt_required()
 def fetch_textbank():
     titleSearchString = request.args.get("titleSearchString")
     if titleSearchString is None:
@@ -109,7 +108,6 @@ def fetch_textbank():
 
     ## the below takes too much time, use for individual clicks
     ## but for the actual difficulty — just an estimate from the textbank
-    # s = time.process_time()
     # knowns = []
     # for row in rows:
     #     lemma_counter = Counter(row.lemmatized_content.split(" "))
@@ -124,7 +122,6 @@ def fetch_textbank():
 
     #     knowns.append(sum(lemma_counter.values()) / row.total_words)
 
-    # print(time.process_time() - s)
     rows = rows.order_by(func.random()).limit(10)
 
     return jsonify(
@@ -138,3 +135,51 @@ def fetch_textbank():
             for row in rows
         ]
     )
+
+
+@textbank_bp.route("/fetch-text-details", methods=["GET"])
+@jwt_required()
+def fetch_specific_details():
+    text_id = request.args.get("id")
+
+    # get the text
+    text = Text.query.filter_by(id=text_id).first()
+
+    return jsonify(textDetails={
+        "id": text.id,
+        "title": text.title,
+        "bigContentPreview": text.content[:997] + "...",
+        "url": text.url,
+        "authors": text.authors,
+        # format date to just show day, month, year
+        "date": text.date.strftime("%d %b %Y"),
+        "unique_words": round(text.unique_words, 3),
+        "total_words": text.total_words,
+        "average_sentence_length": round(text.average_sentence_length, 3),
+        "average_word_length": round(text.average_word_length, 3),
+        "percentage_known": None,
+    })
+
+@textbank_bp.route("/assess-comprehension", methods=["GET"])
+@jwt_required()
+def assess_comprehension():
+    """
+    This function calculates a user's % understanding of a text, and is called
+    later as it can take some time for large wordbanks.
+    """
+    text_id = request.args.get("id")
+    text = Text.query.filter_by(id=text_id).first()
+
+    lemma_counter = Counter(text.lemmatized_content.split(" "))
+    user_words = User.query.filter_by(id=current_user.id).first().words
+    user_words = [word.word.lemma for word in user_words]
+    total_known_words = 0
+
+    # calculate percentage known of total lemma content
+    for user_known_word in user_words:
+        if user_known_word in lemma_counter:
+            total_known_words += lemma_counter[user_known_word]
+
+    percentage_known = total_known_words / sum(lemma_counter.values()) * 100
+
+    return jsonify(percentage_known=round(percentage_known, 3))

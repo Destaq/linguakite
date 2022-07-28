@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-for="text in texts" :key="text.id">
-      <div class="card w-4/5 mx-auto bg-base-100 shadow-lg rounded-g my-2">
+      <div class="card w-4/5 mx-auto bg-base-100 shadow-lg rounded-g my-2 font-serif">
         <div class="card-body grid grid-cols-8 px-6 py-4">
           <div class="col-span-7 mr-8 font-serif">
             <h2 class="card-title font-medium mb-2">{{ text.title }}</h2>
@@ -22,10 +22,10 @@
             <label :for="'my-modal-' + text.id" class="modal cursor-pointer">
               <label class="modal-box relative max-w-none" for="">
                 <h3 class="text-lg font-bold text-neutral"> {{ specificTextDetails.title }}</h3>
-                <p class="font-semibold text-accent">{{ specificTextDetails.percentage_known }}% of words known</p>
+                <p class="font-semibold text-accent" v-if="specificTextDetails.percentage_known !== null">{{ specificTextDetails.percentage_known }}% of words known</p>
                 <div class="grid grid-cols-4 gap-x-2">
                   <p class="py-4 col-span-3 whitespace-pre-line">{{ specificTextDetails.bigContentPreview }}</p>
-                  <div class="mx-auto py-4">
+                  <div class="mx-auto" id="specialMargin">
                     <span class="font-bold">{{ specificTextDetails.total_words }}</span><span class="font-normal">
                       total words</span><br>
                     <span class="font-bold">{{ specificTextDetails.unique_words }}</span><span class="font-normal">
@@ -120,7 +120,6 @@ export default {
         }
       );
 
-      console.log(this.texts, response.data.texts)
       this.texts = this.texts.concat(response.data.texts);
     },
     async fetchSpecificDetails(id) {
@@ -134,7 +133,23 @@ export default {
 
       // update specificTextDetails
       this.specificTextDetails = response.data.textDetails;
+
+      const percentageKnown = await this.$axios.get("/api/assess-comprehension",
+        {
+          params: {
+            id: id,
+          },
+        }
+      );
+
+      this.specificTextDetails.percentage_known = percentageKnown.data.percentage_known;
     }
   }
 }
 </script>
+
+<style scoped>
+#specialMargin {
+  margin-top: 0.95rem;
+}
+</style>

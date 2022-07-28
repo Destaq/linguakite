@@ -50,20 +50,20 @@
 
         <!-- Put this part before </body> tag -->
         <input type="checkbox" id="custom-text-modal" class="modal-toggle" />
-        <label for="custom-text-modal" class="modal cursor-pointer">
+        <label for="custom-text-modal" class="modal cursor-pointer font-serif">
           <label class="modal-box relative w-1/2 max-w-none" for="">
             <h3 class="text-lg font-bold text-center">Upload Private Text</h3>
             <form @submit.prevent="uploadPrivateText" class="form-control p-2 mt-2">
               <div class="grid grid-cols-2 gap-x-2"><input type="text"
                   placeholder="Breathing Oyxgen Linked to Staying Alive" v-model="title"
-                  class="input input-bordered input-sm">
+                  class="input input-bordered input-sm rounded-none">
                 <input type="text" placeholder="Science, Chemistry, News" v-model="tags"
-                  class="input input-bordered input-sm">
+                  class="input input-bordered input-sm rounded-none">
               </div>
-              <textarea class="textarea-sm textarea textarea-bordered mt-2" rows="10"
+              <textarea class="textarea-sm textarea textarea-bordered mt-2 rounded-none" rows="10"
                 placeholder="Revolutionary study suggests that the widespread element is highly beneficial towards human survival — a groundbreaking find that earned its discoverers a nomination for this year's Nobel Prize in Medicine. Published just this Monday, the journal sheds extraordinary light on..."
                 v-model="content"></textarea>
-              <button type="submit" class="btn btn-secondary btn-sm mt-2">
+              <button type="submit" class="btn btn-secondary btn-sm mt-2 rounded-none">
                 Upload
               </button>
             </form>
