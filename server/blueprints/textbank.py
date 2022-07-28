@@ -1,8 +1,8 @@
 from typing import Text
 from flask import Blueprint, request, jsonify
+from itsdangerous import json
 from extensions import db
 from models.user import User
-from models.word import Word
 from models.tag import Tag
 from models.text import Text, text_tag_association_table
 from models.associations.user_word import UserWord
@@ -12,7 +12,7 @@ from flask_jwt_extended import (
     jwt_required,
 )
 from sqlalchemy import func
-import time
+from datetime import datetime
 from collections import Counter
 
 
@@ -160,6 +160,7 @@ def fetch_specific_details():
         "percentage_known": None,
     })
 
+
 @textbank_bp.route("/assess-comprehension", methods=["GET"])
 @jwt_required()
 def assess_comprehension():
@@ -183,3 +184,43 @@ def assess_comprehension():
     percentage_known = total_known_words / sum(lemma_counter.values()) * 100
 
     return jsonify(percentage_known=round(percentage_known, 3))
+
+
+@textbank_bp.route("/add-private-text", methods=["POST"])
+@jwt_required()
+def add_private_text():
+    # get the data
+    data = request.get_json()
+
+    title = data["title"]
+    content = data["content"]
+    url = data["url"]
+    authors = [data["authors"]]
+    tags = data["tags"]
+
+    # convert date to datetime object, where date looks like '2022-07-28T23:17:36.054Z'
+    date = datetime.utcnow()
+
+    # create the text
+    text = Text(title, content, url, authors, date)
+    db.session.add(text)
+    db.session.commit()
+
+    # check if any of the tags don't exist
+    for tag in tags:
+        if Tag.query.filter_by(name=tag).first() is None:
+            new_tag = Tag(tag)
+            db.session.add(new_tag)
+            db.session.commit()
+
+    # now query for each tag and add to text_tag_association_table
+    for tag in tags:
+        tag = Tag.query.filter_by(name=tag).first()
+        tag.texts.append(text)
+        text.tags.append(tag)
+
+        db.session.add(tag)
+        db.session.add(text)
+        db.session.commit()
+
+    return jsonify(success=True)

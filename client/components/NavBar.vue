@@ -49,7 +49,7 @@
         <label for="custom-text-modal" class="btn modal-button btn-outline btn-sm mr-5">+</label>
 
         <!-- Put this part before </body> tag -->
-        <input type="checkbox" id="custom-text-modal" class="modal-toggle" />
+        <input type="checkbox" id="custom-text-modal" class="modal-toggle" ref="modalToggle" />
         <label for="custom-text-modal" class="modal cursor-pointer font-serif">
           <label class="modal-box relative w-1/2 max-w-none" for="">
             <h3 class="text-lg font-bold text-center">Upload Private Text</h3>
@@ -91,19 +91,23 @@ export default {
       this.$auth.logout();
     },
     async uploadPrivateText() {
-      await this.$axios.post("/api/add-private-text", {
-        title: this.title,
-        content: this.content,
-        url: "",
-        authors: this.$auth.user,
-        date: new Date(),
-        tags: this.tags.split(",").map(tag => tag.trim()),
-      });
+      if (this.title !== "" && this.content !== "") {
+        await this.$axios.post("/api/add-private-text", {
+          title: this.title,
+          content: this.content,
+          url: "",
+          authors: this.$auth.user,
+          tags: this.tags.split(",").map(tag => tag.trim()),
+        });
 
-      // clear data
-      this.title = "";
-      this.content = "";
-      this.tags = "";
+        // clear data
+        this.title = "";
+        this.content = "";
+        this.tags = "";
+
+        // close page
+        this.$refs.modalToggle.checked = false;
+      }
     }
   }
 };

@@ -60,7 +60,10 @@ class Text(db.Model):
         self.url = url
         self.date = date
 
-        authors = ast.literal_eval(authors)
+        try:
+            authors = ast.literal_eval(authors)  # this is used for loading in directly from the files
+        except:
+            pass  # authors remains as authors
         # now we have a list of author names, let's convert it to a string
         # using appropriate English grammar
         if len(authors) == 1:
