@@ -84,6 +84,9 @@
     </div>
     <!-- ############# -->
     <DatabaseTable ref="dbTable" class="pt-4" />
+    <div class="btn-group justify-center gap-x-0.5 mt-4">
+        <button class="btn w-2/5 btn-sm" @click="search">Load More</button>
+      </div>
   </div>
 </template>
 

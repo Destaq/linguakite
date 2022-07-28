@@ -46,9 +46,6 @@
           </div>
         </div>
       </div>
-      <div class="btn-group justify-center gap-x-0.5 mt-4">
-        <button class="btn w-2/5 btn-sm" @click="loadTextbank('', 'No Limit', [], 'or', 0, 20000)">Load More</button>
-      </div>
     </div>
   </div>
 </template>
@@ -126,7 +123,7 @@ export default {
         }
       );
 
-      this.texts = response.data.texts;
+      this.texts.concat(response.data.texts);
     },
     async fetchSpecificDetails(id) {
       const response = await this.$axios.get("/api/fetch-text-details",
