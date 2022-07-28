@@ -1,24 +1,25 @@
 <template>
   <div>
-    <div v-for="(text, index) in texts" :key="index">
-      <div class="card w-4/5 mx-auto bg-base-100 shadow-xl">
+    <div v-for="text in texts" :key="text.id">
+      <div class="card w-4/5 mx-auto bg-base-100 shadow-lg rounded-g my-2">
         <div class="card-body grid grid-cols-8 px-6 py-4">
-          <div class="col-span-7 mr-8">
-            <h2 class="card-title underline mb-2">{{ text.title }}</h2>
+          <div class="col-span-7 mr-8 font-serif">
+            <h2 class="card-title font-medium mb-2">{{ text.title }}</h2>
             <p>{{ text.content_preview }}</p>
             <p class="mt-2">
-              <span v-for="tag in text.tags.slice(0, 10)" :key="index" class="text-accent text-sm font-light">
+              <!-- No need to slice, 5 max on site -->
+              <span v-for="(tag, index) in text.tags" :key="index" class="text-accent text-sm font-light">
                 #{{ tag.toLowerCase() }}&nbsp;
               </span>
             </p>
           </div>
           <div class="card-actions justify-end col-span-1 my-auto">
-            <label :for="'my-modal-' + index" class="btn modal-button btn-primary"
+            <label :for="'my-modal-' + text.id" class="btn modal-button btn-primary"
               @click="fetchSpecificDetails(text.id)">
               More Details
             </label>
-            <input type="checkbox" :id="'my-modal-' + index" class="modal-toggle" />
-            <label :for="'my-modal-' + index" class="modal cursor-pointer">
+            <input type="checkbox" :id="'my-modal-' + text.id" class="modal-toggle" />
+            <label :for="'my-modal-' + text.id" class="modal cursor-pointer">
               <label class="modal-box relative max-w-none" for="">
                 <h3 class="text-lg font-bold text-neutral"> {{ specificTextDetails.title }}</h3>
                 <p class="font-semibold text-accent">{{ specificTextDetails.percentage_known }}% of words known</p>
@@ -105,7 +106,6 @@ export default {
     },
     async loadTextbank(titleSearchString, difficultyType, tags, and_or_or, minWordLength, maxWordLength) {
       // rerender textbank whenever this runs (as only 20 texts are received from server)
-      const authToken = this.$auth.strategies.cookie.token.$storage._state["_token.cookie"];
       const response = await this.$axios.get("/api/fetch-textbank",
         {
           params: {
@@ -117,13 +117,11 @@ export default {
             maxWordLength: maxWordLength,
             usedIds: this.texts.map(text => text.id)
           },
-          // headers: {
-          //   Authorization: authToken,  // usually not required, just because called from fetch()
-          // },
         }
       );
 
-      this.texts.concat(response.data.texts);
+      console.log(this.texts, response.data.texts)
+      this.texts = this.texts.concat(response.data.texts);
     },
     async fetchSpecificDetails(id) {
       const response = await this.$axios.get("/api/fetch-text-details",

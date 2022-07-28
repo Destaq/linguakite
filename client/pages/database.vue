@@ -2,10 +2,12 @@
   <div>
     <div>
       <!-- search bar and search tools -->
-      <form @submit.prevent="search" class="w-4/5 mx-auto border shadow-lg rounded-none p-4 bg-gray-100 grid grid-rows-4 gap-y-2 items-center">
+      <form @submit.prevent="search(true)"
+        class="w-4/5 mx-auto border shadow-md rounded-none p-4 bg-gray-100 grid grid-rows-4 gap-y-2 items-center">
         <!-- title search -->
         <div class="grid grid-cols-12 gap-x-4">
-          <input type="text" placeholder="Some title..." class="input w-full col-span-6 input-bordered" v-model="titleSearch" />
+          <input type="text" placeholder="Some title..." class="input w-full col-span-6 input-bordered"
+            v-model="titleSearch" />
 
           <!-- tag search -->
           <input type="text" placeholder="Covid-19, Birthday Party, Dogs" class="input w-full col-span-4 input-bordered"
@@ -29,12 +31,17 @@
         <!-- length ranges -->
         <div class="grid grid-cols-2 gap-x-6">
           <div class="grid grid-cols-7">
-            <span class="w-11/12 text-sm text-center justify-center bg-gray-300 rounded-lg justify-self-start self-start">{{ minWords }}</span>
-            <input type="range" min="0" :max="maxWords - 50" value="0" class="range range-sm col-span-6" step="50" v-model="minWords" />
+            <span
+              class="w-11/12 text-sm text-center justify-center bg-gray-300 rounded-lg justify-self-start self-start">{{
+                  minWords
+              }}</span>
+            <input type="range" min="0" :max="maxWords - 50" value="0" class="range range-sm col-span-6" step="50"
+              v-model="minWords" />
           </div>
           <div class="grid grid-cols-7">
             <span class="w-11/12 text-sm text-center -ml-1 justify-center bg-gray-300 rounded-lg">{{ maxWords }}</span>
-            <input type="range" min="50" max="20000" value="20000" class="range range-sm col-span-6" step="50" v-model="maxWords" />
+            <input type="range" min="50" max="20000" value="20000" class="range range-sm col-span-6" step="50"
+              v-model="maxWords" />
           </div>
         </div>
 
@@ -44,13 +51,15 @@
             <input id="radio-3" type="radio" name="bordered-radio" class="radio radio-xs" value="No Filter"
               v-model="difficulty">
             <label for="radio-3"
-              class="py-4 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">No Filter</label>
+              class="py-4 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">No
+              Filter</label>
           </div>
           <div class="flex items-center rounded border border-gray-200 hover:border-gray-300 px-2 cursor-pointer">
             <input id="radio-4" type="radio" name="bordered-radio" class="radio radio-xs" value="Very Easy"
               v-model="difficulty">
             <label for="radio-4"
-              class="py-4 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">Very Easy</label>
+              class="py-4 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">Very
+              Easy</label>
           </div>
           <div class="flex items-center rounded border border-gray-200 hover:border-gray-300 px-2 cursor-pointer">
             <input id="radio-5" type="radio" name="bordered-radio" class="radio radio-xs" value="Easy"
@@ -74,7 +83,8 @@
             <input id="radio-8" type="radio" name="bordered-radio" class="radio radio-xs" value="Very Hard"
               v-model="difficulty">
             <label for="radio-8"
-              class="py-4 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">Very Hard</label>
+              class="py-4 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">Very
+              Hard</label>
           </div>
         </div>
 
@@ -85,8 +95,8 @@
     <!-- ############# -->
     <DatabaseTable ref="dbTable" class="pt-4" />
     <div class="btn-group justify-center gap-x-0.5 mt-4">
-        <button class="btn w-2/5 btn-sm" @click="search">Load More</button>
-      </div>
+      <button class="btn w-2/5 btn-sm" @click="search">Load More</button>
+    </div>
   </div>
 </template>
 
@@ -108,16 +118,30 @@ export default {
     };
   },
   methods: {
-    search() {
-      this.$refs.dbTable.loadTextbank(
-        this.titleSearch,
-        this.difficulty,
-        this.tagSearch.split(",").map(tag => tag.trim()),
-        this.tagType,
-        this.minWords,
-        this.maxWords,
-        []
-      );
+    search(isSubmitting = false) {
+      // we are submitting not loading, so need to reset the page
+      if (isSubmitting === true) {
+        this.$refs.dbTable.clearTextbank();
+        this.$refs.dbTable.loadTextbank(
+          this.titleSearch,
+          this.difficulty,
+          this.tagSearch.split(",").map(tag => tag.trim()),
+          this.tagType,
+          this.minWords,
+          this.maxWords,
+          []
+        );
+      } else {
+        this.$refs.dbTable.loadTextbank(
+          this.titleSearch,
+          this.difficulty,
+          this.tagSearch.split(",").map(tag => tag.trim()),
+          this.tagType,
+          this.minWords,
+          this.maxWords,
+          this.$refs.dbTable.texts.map(text => text.id)
+        );
+      }
     }
   },
   watch: {
