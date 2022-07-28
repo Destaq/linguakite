@@ -44,8 +44,14 @@ class Text(db.Model):
     )  # used for 'percentage words/content known'
     total_words = db.Column(db.Integer, nullable=False)
 
+    difficulty = db.Column(
+        db.Float, nullable=True
+    )  # only bc. of the migration when there were already texts in the db
+
     # finally we have tags, which have a many-many relationship to this model
-    tags = db.relationship("Tag", secondary=text_tag_association_table, back_populates="texts")
+    tags = db.relationship(
+        "Tag", secondary=text_tag_association_table, back_populates="texts"
+    )
     users = db.relationship("UserText", back_populates="text")
 
     def __init__(self, title, content, url, authors, date):
@@ -66,13 +72,17 @@ class Text(db.Model):
 
         # now the 'special' details
         self.total_pages = self.calculate_total_pages(content)
-        self.average_sentence_length = self.calculate_average_sentence_length(
-            content
-        )
+        self.average_sentence_length = self.calculate_average_sentence_length(content)
         self.average_word_length = self.calculate_average_word_length(content)
         self.total_words = len(content.split())
         self.lemmatized_content = self.lemmatize_content(content)
         self.unique_words = self.calculate_unique_words(self.lemmatized_content)
+        self.difficulty = self.calculate_difficulty(
+            self.unique_words,
+            self.total_words,
+            self.average_word_length,
+            self.average_sentence_length,
+        )
 
     def calculate_total_pages(self, content):
         """
@@ -166,3 +176,13 @@ class Text(db.Model):
             unique_words.add(word)
 
         return len(unique_words)
+
+    def calculate_difficulty(
+        self, unique_words, total_words, average_word_length, average_sentence_length
+    ):
+        return (
+            unique_words
+            / total_words
+            * average_word_length
+            * (average_sentence_length ** 0.1)
+        )
