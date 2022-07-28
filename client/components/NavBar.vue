@@ -46,7 +46,29 @@
       <!-- if authenticated -->
       <div v-else>
         <!-- TODO: below button opens up 'document upload' modal (copy & paste in content, then add title + tags, rest done automatically) -->
-        <button class="btn btn-outline btn-sm mr-5 btn-neutral">+</button>
+        <label for="custom-text-modal" class="btn modal-button btn-outline btn-sm mr-5">+</label>
+
+        <!-- Put this part before </body> tag -->
+        <input type="checkbox" id="custom-text-modal" class="modal-toggle" />
+        <label for="custom-text-modal" class="modal cursor-pointer">
+          <label class="modal-box relative w-1/2 max-w-none" for="">
+            <h3 class="text-lg font-bold text-center">Upload Private Text</h3>
+            <form @submit.prevent="uploadPrivateText" class="form-control p-2 mt-2">
+              <div class="grid grid-cols-2 gap-x-2"><input type="text"
+                  placeholder="Breathing Oyxgen Linked to Staying Alive" v-model="title"
+                  class="input input-bordered input-sm">
+                <input type="text" placeholder="Science, Chemistry, News" v-model="tags"
+                  class="input input-bordered input-sm">
+              </div>
+              <textarea class="textarea-sm textarea textarea-bordered mt-2" rows="10"
+                placeholder="Revolutionary study suggests that the widespread element is highly beneficial towards human survival — a groundbreaking find that earned its discoverers a nomination for this year's Nobel Prize in Medicine. Published just this Monday, the journal sheds extraordinary light on..."
+                v-model="content"></textarea>
+              <button type="submit" class="btn btn-secondary btn-sm mt-2">
+                Upload
+              </button>
+            </form>
+          </label>
+        </label>
         <button class="btn btn-sm btn-error w-28 mr-2" @click="logOut">
           Log Out
         </button>
@@ -57,9 +79,31 @@
 
 <script>
 export default {
+  data() {
+    return {
+      title: "",
+      content: "",
+      tags: "",
+    }
+  },
   methods: {
     logOut() {
       this.$auth.logout();
+    },
+    async uploadPrivateText() {
+      await this.$axios.post("/api/add-private-text", {
+        title: this.title,
+        content: this.content,
+        url: "",
+        authors: this.$auth.user,
+        date: new Date(),
+        tags: this.tags.split(",").map(tag => tag.trim()),
+      });
+
+      // clear data
+      this.title = "";
+      this.content = "";
+      this.tags = "";
     }
   }
 };

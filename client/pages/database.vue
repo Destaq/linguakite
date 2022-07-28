@@ -5,10 +5,10 @@
       <form @submit.prevent="search" class="w-4/5 mx-auto border shadow-lg rounded-none p-4 bg-gray-100 grid grid-rows-4 gap-y-2 items-center">
         <!-- title search -->
         <div class="grid grid-cols-12 gap-x-4">
-          <input type="text" placeholder="Some title..." class="input w-full col-span-6" v-model="titleSearch" />
+          <input type="text" placeholder="Some title..." class="input w-full col-span-6 input-bordered" v-model="titleSearch" />
 
           <!-- tag search -->
-          <input type="text" placeholder="Covid-19, Birthday Party, Dogs" class="input w-full col-span-4"
+          <input type="text" placeholder="Covid-19, Birthday Party, Dogs" class="input w-full col-span-4 input-bordered"
             v-model="tagSearch" />
           <div class="grid grid-cols-2 col-span-2">
             <div class="flex items-center px-2 cursor-pointer">
