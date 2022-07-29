@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto overflow-y-hidden">
     <table class="table table-fixed table-compact w-full font-serif">
       <thead>
         <tr>
@@ -22,8 +22,8 @@
               <div class="collapse-title font-bold">
                 Reveal
               </div>
-              <div class="collapse-content">
-                <p>{{ word.definition }}</p>
+              <div class="collapse-content text-center">
+                <p class="mr-8">{{ word.definition }}</p>
               </div>
             </div>
           </td>
@@ -42,12 +42,34 @@
         </tr>
       </tbody>
     </table>
-    <div class="btn-group justify-center gap-x-0.5 mt-4">
-      <button class="btn btn-sm" :class="currentPage <= 1 ? 'btn-disabled' : ''"
-        @click="renderWordbank(currentPage - 1)">«</button>
-      <button class="btn w-1/3 btn-sm">Page {{ currentPage }}</button>
-      <button class="btn btn-sm" :class="currentPage === Math.ceil(totalElements / 20) ? 'btn-disabled' : ''"
-        @click="renderWordbank(currentPage + 1)">»</button>
+    <div class="grid grid-cols-6 mt-4">
+      <div class="form-control">
+        <div class="input-group input-group-sm">
+          <span>Jump</span>
+          <input type="number" class="input input-sm w-full" v-model="currentPageCopy" @change="jumpToPage"
+            :max="Math.ceil(totalElements / 20)" min="1" />
+        </div>
+      </div>
+      <div class="btn-group justify-center gap-x-0.5 col-span-4">
+        <button class="btn btn-sm" :class="currentPage <= 1 ? 'btn-disabled' : ''"
+          @click="renderWordbank(currentPage - 1)">«</button>
+        <button class="btn w-1/3 btn-sm">Page {{ currentPage <= 0 ? 1 : currentPage }}</button>
+        <!-- >= to support case of no words. not >== because of parseInt issues -->
+        <button class="btn btn-sm" :class="currentPage >= Math.ceil(totalElements / 20) ? 'btn-disabled' : ''"
+          @click="renderWordbank(currentPage + 1)">»</button>
+      </div>
+      <div class="items-end w-full">
+        <label class="btn btn-warning btn-sm modal-button w-full" for="reset-wordbank-modal">Reset Wordbank</label>
+        <input type="checkbox" id="reset-wordbank-modal" class="modal-toggle" ref="deleteModalCheckbox" />
+        <label for="reset-wordbank-modal" class="modal cursor-pointer">
+          <label class="modal-box relative" for="">
+            <h3 class="text-lg font-bold">Are you sure about this?</h3>
+            <p class="py-4">This will delete all your known words, an irreversible change!
+            </p>
+            <button class="w-full btn btn-primary" @click="emptyWordbank">I'm Sure</button>
+          </label>
+        </label>
+      </div>
     </div>
   </div>
 </template>
@@ -58,6 +80,7 @@ export default {
     return {
       words: [],
       currentPage: 1,
+      currentPageCopy: 1, // done as otherwise update not caught
       totalElements: 20, // set from backend
     }
   },
@@ -93,6 +116,10 @@ export default {
 
       this.renderWordbank(this.currentPage);
     },
+    async jumpToPage() {
+      this.currentPage = parseInt(this.currentPageCopy);
+      this.renderWordbank(this.currentPageCopy);
+    },
     async renderWordbank(page = 1) {
       // rerender wordbank whenever this runs (as only 20 words are received from server)
       const authToken = this.$auth.strategies.cookie.token.$storage._state["_token.cookie"];
@@ -110,6 +137,7 @@ export default {
       this.words = response.data.words;
       this.totalElements = response.data.total_elements;
       this.currentPage = page;
+      this.currentPageCopy = 1;
     },
     async fetchDefinition(word) {
       // fetch from https://dictionaryapi.dev/
@@ -130,6 +158,11 @@ export default {
         }
         return w;
       });
+    },
+    async emptyWordbank() {
+      await this.$axios.delete("/api/empty-wordbank");
+      this.$refs.deleteModalCheckbox.checked = false;
+      this.renderWordbank(1);
     }
   }
 }

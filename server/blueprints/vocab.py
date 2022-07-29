@@ -71,7 +71,7 @@ def update_vocab_from_file():
     Updates user wordbank from a `.txt` file of newline-separated English words.
     """
 
-    file = request.files["file"]
+    file = request.files["wordlist"]
 
     # read newline-separated words from file into list
     words = file.read().decode("utf-8").split("\n")
@@ -79,8 +79,6 @@ def update_vocab_from_file():
 
     # for each word in words
     for word in words:
-        # lemmatize the word
-
         # check for word lemma in Word DB
         if Word.query.filter_by(lemma=word).first() is None:
             # if not, add it
@@ -88,14 +86,13 @@ def update_vocab_from_file():
                 lemma=word
             )  # with maximally high = low lemma_rank and word_rank by default
             db.session.add(new_word)
-        else:
-            new_word = Word.query.filter_by(lemma=word).first()
 
     db.session.commit()
 
     # then create association between word and user
     # doing this outside of the loop because otherwise can't link new ones
     for word in words:
+        new_word = Word.query.filter_by(lemma=word).first()
         # check if the user already has the word in their wordbank
         if (
             UserWord.query.filter_by(
@@ -194,6 +191,21 @@ def delete_word():
 
     return jsonify({"success": True})
 
+@vocab_bp.route("/empty-wordbank", methods=["DELETE"])
+@jwt_required()
+def empty_wordbank():
+    """
+    Deletes all words from the UserWord AssociationObject table, so that the user no longer knows any words.
+    """
+    user_words = UserWord.query.filter_by(user_id=current_user.id).all()
+
+    for user_word in user_words:
+        db.session.delete(user_word)
+
+    db.session.commit()
+
+    return jsonify({"success": True})
+
 
 @vocab_bp.route("/fetch-wordbank", methods=["GET"])
 @jwt_required()
@@ -237,10 +249,12 @@ def fetch_wordbank():
 
 
     words_for_dict = [word["lemma"] for word in user_words]
+    translations = []
 
-    translations = translator.translate_text(
-        words_for_dict, target_lang="zh", source_lang="en"
-    )
+    if len(words_for_dict) > 0:
+        translations = translator.translate_text(
+            words_for_dict, target_lang="zh", source_lang="en"
+        )
 
     for i in range(len(user_words)):
         if translations[i].text != user_words[i]["lemma"] and translations[i].text != "":

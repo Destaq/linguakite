@@ -26,7 +26,7 @@
         <div class="flex">
           <input
             class="block w-full cursor-pointer bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-transparent text-sm rounded-lg flex-1 mr-2"
-            aria-describedby="user_help" id="user_avatar" type="file">
+            aria-describedby="user_help" id="user_avatar" type="file" ref="uploadFileInput">
           <input type="submit" class="btn" />
         </div>
         <div class="mt-1 text-sm text-gray-500" id="user_help">You can also upload a newline separated <span
@@ -62,8 +62,12 @@ export default {
       this.$refs.wordbankTable.renderWordbank(1);
     },
     async uploadWordList() {
-      await this.$axios.post("/api/upload-vocab-file", {
-        vocab_size: this.vocabEstimate,
+      let formData = new FormData();
+      formData.append("wordlist", this.$refs.uploadFileInput.files[0]);
+      await this.$axios.post("/api/upload-vocab-file", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       this.vocabEstimate = null;
 
