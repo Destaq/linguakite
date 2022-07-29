@@ -29,7 +29,11 @@
           </div>
           <p class="whitespace-pre-line fle flex-1 overflow-y-auto my-2">
             <span v-for="(word, index) in chunks[currentPage - 1]" :key="index">
-              <span :class="word.known ? '' : 'bg-red-400'">{{ word.word }}</span>
+              <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
+                :data-end="word.word[0]" v-if="index === 0 && currentPage > 1">{{ word.word.slice(2, word.word.length)
+                }}</span>
+              <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
+                :data-end="word.word[0]" v-else>{{ word.word.slice(1, word.word.length) }}</span>
             </span>
           </p>
           <div class="flex border-t rounded-none w-full">
@@ -53,7 +57,8 @@
         </div>
         <div class="grid grid-rows-4 h-full">
           <div class="row-span-3 mt-2">
-            <p>{{ clickedWord }} <span v-if="clickedWordTranslation !== ''">— {{ clickedWordTranslation }}</span></p>
+            <p>{{ clickedWord }}<span v-if="clickedWordTranslation !== ''"> — {{ clickedWordTranslation }}</span><span
+                v-if="clickedWordRank !== ''"> — #{{ clickedWordRank }}</span></p>
             <p class="italic font-light mt-2">{{ clickedWordDefinition }}</p>
             <button class="btn btn-secondary btn-xs rounded-sm w-full mt-4" @click="getPronunciation"
               v-if="clickedWord !== ''">Pronunciation</button>
@@ -81,11 +86,14 @@ export default {
       simplification: "No Simplification",
       timerTime: "02:25:53",
       clickedWord: "",
+      clickedWordLemma: "",
       clickedWordTranslation: "",
       clickedWordDefinition: "",
+      clickedWordRank: "",
       known: false,
       chunks: [],
       currentPage: 1,
+      synth: null
     }
   },
   head() {
@@ -109,18 +117,85 @@ export default {
     this.splitContentToChunks();
   },
   methods: {
-    simplifyContent() { },
-    getPronunciation() { },
-    wordClicked() { },
-    toggleWord() { },
-    playPageTTS() { }, // don't forget to toggle at end
-    stopPageTTS() { },
+    // TODO: timer (+ API call)
+    simplifyContent() {
+      // TODO
+    },
+    getPronunciation() {
+      let sound = new SpeechSynthesisUtterance(this.clickedWord);
+      sound.lang = 'en-US';
+      window.speechSynthesis.speak(sound);
+    },
+    async wordClicked(word) {
+      const wordNoPunc = word.word.replace(/[.,\/#!$%\^&\*;:{}=\_`~()]/g, "")
+
+      this.clickedWord = wordNoPunc.toLowerCase();
+      this.clickedWordLemma = word.lemma;
+      this.clickedWordRank = word.rank >= 60000 ? "60 000+" : word.rank;
+      this.known = word.known;
+
+      try {
+        const response = await this.$axios.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + wordNoPunc);
+
+        // get the first definition
+        this.clickedWordDefinition = response.data[0].meanings[0].definitions[0].definition;
+      } catch {
+        this.clickedWordDefinition = "No definition found.";
+      }
+
+      // now do translation via deepl key (this.$config.deeplSecret)
+      const response2 = await this.$axios.get(`/api/get-translation?word=${wordNoPunc}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+
+      this.clickedWordTranslation = response2.data.translation;
+
+    },
+    async toggleWord() {
+      await this.$axios.post("/api/update-word-status", {
+        word: this.clickedWord.trim(),
+        word_lemma: this.clickedWordLemma.trim(),
+        known: this.known,
+      });
+      this.known = !this.known;
+
+      // go through all chunks and update those words with the same lemma
+      this.chunks.forEach(chunk => {
+        chunk.forEach(word => {
+          if (word.lemma === this.clickedWordLemma) {
+            word.known = this.known;
+          }
+        });
+      });
+    },
+    playPageTTS() {
+      // play tts for current page (chunk map)
+      this.ttsOn = true;
+      let tts = "";
+      for (let i = 0; i < this.chunks[this.currentPage - 1].length; i++) {
+        tts += this.chunks[this.currentPage - 1][i].word + " ";
+      }
+      this.synth = new SpeechSynthesisUtterance(tts);
+      this.synth.lang = 'en-US';
+      window.speechSynthesis.speak(this.synth);
+      this.synth.addEventListener('end', () => {
+        this.ttsOn = false;
+      });
+    }, // don't forget to toggle at end
+    stopPageTTS() {
+      window.speechSynthesis.cancel(this.synth);
+      this.ttsOn = false;
+    },
     updateProgress(value) {
       this.currentPage += value;
 
-      // TODO: api call to update progress
+      // TODO: api call to update progress and times seen
     },
-    splitContentToChunks() {      
+    splitContentToChunks() {
       var words = this.content.map(e => e.word)
 
       var chunk = {}
@@ -129,7 +204,7 @@ export default {
       // iterate through word in words
       for (var i = 0; i < words.length; i++) {
         // update chunk length
-        chunk_length += words[i].length + 1; // just forget serverside
+        chunk_length += words[i].length + 1; // just forget serversid
 
         if (chunk_length > 2500 &&
           words[i].indexOf("\n") > -1
@@ -137,7 +212,7 @@ export default {
           // if newline is at the back
           if (words[i].indexOf("\n") == words[i].length - 1) {
             chunk = {
-              "word": words[i].substring(0, words[i].length - 1) + "\n\n",
+              "word": " " + words[i].substring(0, words[i].length - 1) + "\n\n",
               "lemma": this.content[i].lemma,
               "known": this.content[i].known,
               "rank": this.content[i].rank
@@ -148,7 +223,7 @@ export default {
             chunk_length = 0;
           } else {
             chunk = {
-              "word":  words[i].substring(words[i].indexOf("\n\n"), words[i].length) + " ",
+              "word": " " + words[i].substring(words[i].indexOf("\n"), words[i].length),
               "lemma": this.content[i].lemma,
               "known": this.content[i].known,
               "rank": this.content[i].rank
@@ -162,7 +237,7 @@ export default {
         } else {
           // if chunk length is less than 1000, add word to chunk
           chunk = {
-            "word": words[i].replace("\n", "\n\n") + " ",
+            "word": " " + words[i].replace("\n", "\n\n"),
             "lemma": this.content[i].lemma,
             "known": this.content[i].known,
             "rank": this.content[i].rank
@@ -176,6 +251,31 @@ export default {
       if (chunk_length > 0) {
         this.chunks.push(chunk_group);
       }
+    },
+    wordStyling(word) {
+      let output = word.known ? 'bg-normal underline decoration-2' : 'bg-red-400 underline decoration-2';
+      if (word.rank < 100) {
+        output += " decoration-violet-900";
+      } else if (word.rank < 250) {
+        output += " decoration-sky-900";
+      } else if (word.rank < 500) {
+        output += " decoration-green-900";
+      } else if (word.rank < 1000) {
+        output += " decoration-lime-400"
+      } else if (word.rank < 2500) {
+        output += " decoration-yellow-700"
+      } else if (word.rank < 5000) {
+        output += " decoration-amber-800"
+      } else if (word.rank < 10000) {
+        output += " decoration-orange-800"
+      } else if (word.rank < 25000) {
+        output += " decoration-red-400"
+      } else if (word.rank < 60000) {
+        output += " decoration-pink-500"
+      } else {
+        output += " decoration-stone-800"
+      }
+      return output;
     }
   }
 }
@@ -184,5 +284,14 @@ export default {
 <style scoped>
 #specialHeightViewport {
   height: 85vh;
+}
+
+.bg-red-400::after {
+  @apply bg-gray-50;
+  content: attr(data-end);
+}
+
+.bg-normal::after {
+  content: attr(data-end);
 }
 </style>

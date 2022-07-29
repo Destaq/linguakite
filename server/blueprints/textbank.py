@@ -15,8 +15,17 @@ from flask_jwt_extended import (
 from sqlalchemy import func
 from datetime import datetime
 from collections import Counter
+from dotenv import load_dotenv
 import spacy
 import re
+import deepl
+import os
+
+load_dotenv()
+
+translator = deepl.Translator(
+    os.environ.get("DEEPL_API_KEY"),
+)
 
 nlp = spacy.load('en_core_web_sm')
 
@@ -209,7 +218,7 @@ def read_text():
     for word in re.split(" ", text.content):
         # check if word is whitespace with regex
         if not len(word) == 0:
-            lemma = nlp(word)[0].lemma_  # TODO: do in a faster way, now problem with numbering (perhaps just newlines)
+            lemma = nlp(word)[0].lemma_  # TODO: replace lemmatized_content with this, so that the size is the same
             lemma_ob = Word.query.filter_by(lemma=lemma).first()
             
             known = False
@@ -267,6 +276,45 @@ def add_private_text():
 
         db.session.add(tag)
         db.session.add(text)
+        db.session.commit()
+
+    return jsonify(success=True)
+
+@textbank_bp.route("/get-translation", methods=["GET"])
+@jwt_required()
+def get_translation():
+    word = request.args.get("word")
+
+    translation = translator.translate_text(word, target_lang="zh", source_lang="en")
+
+    return jsonify(translation=translation.text)
+
+@textbank_bp.route("/update-word-status", methods=["POST"])
+@jwt_required()
+def update_word_status():
+    word = request.get_json()["word"]
+    word_lemma = request.get_json()["word_lemma"]
+    known = request.get_json()["known"]
+
+    word_ob = Word.query.filter_by(lemma=word_lemma).first()
+
+    if known == True:
+        # we are removing a known word from user wordbank
+        user_word = UserWord.query.filter_by(user_id=current_user.id, word_id=word_ob.id).first()
+        db.session.delete(user_word)
+        db.session.commit()
+    elif known == False:
+        # we are making a new connection
+        # check if the word exists
+        if word_ob == None:
+            # create the word
+            word_ob = Word(word_lemma)
+            db.session.add(word_ob)
+            db.session.commit()
+
+        # create the user word
+        user_word = UserWord(current_user.id, word_ob.id, 0)
+        db.session.add(user_word)
         db.session.commit()
 
     return jsonify(success=True)

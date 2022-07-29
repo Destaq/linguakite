@@ -137,7 +137,6 @@ export default {
       this.words = response.data.words;
       this.totalElements = response.data.total_elements;
       this.currentPage = page;
-      this.currentPageCopy = 1;
     },
     async fetchDefinition(word) {
       // fetch from https://dictionaryapi.dev/
