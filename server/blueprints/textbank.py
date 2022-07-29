@@ -4,6 +4,7 @@ from itsdangerous import json
 from extensions import db
 from models.user import User
 from models.tag import Tag
+from models.word import Word
 from models.text import Text, text_tag_association_table
 from models.associations.user_word import UserWord
 from models.associations.user_text import UserText
@@ -14,6 +15,10 @@ from flask_jwt_extended import (
 from sqlalchemy import func
 from datetime import datetime
 from collections import Counter
+import spacy
+import re
+
+nlp = spacy.load('en_core_web_sm')
 
 
 textbank_bp = Blueprint("textbank", __name__)
@@ -189,13 +194,42 @@ def assess_comprehension():
 
 
 @textbank_bp.route("/read-text", methods=["GET"])
+@jwt_required()
 def read_text():
     text_id = request.args.get("id")
 
     # get the text
     text = Text.query.filter_by(id=text_id).first()
 
-    return jsonify(title=text.title, content=text.content)
+    # replace all 2x newlines with a space and a newline
+    text.content = text.content.replace("\n\n", " \n")
+
+
+    output_content = []
+    for word in re.split(" ", text.content):
+        # check if word is whitespace with regex
+        if not len(word) == 0:
+            lemma = nlp(word)[0].lemma_  # TODO: do in a faster way, now problem with numbering (perhaps just newlines)
+            lemma_ob = Word.query.filter_by(lemma=lemma).first()
+            
+            known = False
+            rank = 60_000
+
+            if lemma_ob != None:
+                rank = lemma_ob.lemma_rank
+                if UserWord.query.filter_by(user_id=current_user.id, word_id=lemma_ob.id).first() != None:
+                    known = True
+
+            output_content.append(
+                {
+                    "word": word,
+                    "lemma": lemma,
+                    "known": known,
+                    "rank": rank,
+                }
+            )
+
+    return jsonify(title=text.title, content=output_content)
 
 
 @textbank_bp.route("/add-private-text", methods=["POST"])

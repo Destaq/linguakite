@@ -109,7 +109,7 @@ class Text(db.Model):
         chunk_length = 0
         for word in words:
             chunk_length += len(word)
-            if chunk_length > 1000:
+            if chunk_length > 1000:  # NOTE: this is 1000 chars of content, excludes spaces
                 chunk += word
                 chunk_count += 1
                 chunk = ""
