@@ -145,20 +145,22 @@ def fetch_specific_details():
     # get the text
     text = Text.query.filter_by(id=text_id).first()
 
-    return jsonify(textDetails={
-        "id": text.id,
-        "title": text.title,
-        "bigContentPreview": text.content[:997] + "...",
-        "url": text.url,
-        "authors": text.authors,
-        # format date to just show day, month, year
-        "date": text.date.strftime("%d %b %Y"),
-        "unique_words": round(text.unique_words, 3),
-        "total_words": text.total_words,
-        "average_sentence_length": round(text.average_sentence_length, 3),
-        "average_word_length": round(text.average_word_length, 3),
-        "percentage_known": None,
-    })
+    return jsonify(
+        textDetails={
+            "id": text.id,
+            "title": text.title,
+            "bigContentPreview": text.content[:997] + "...",
+            "url": text.url,
+            "authors": text.authors,
+            # format date to just show day, month, year
+            "date": text.date.strftime("%d %b %Y"),
+            "unique_words": round(text.unique_words, 3),
+            "total_words": text.total_words,
+            "average_sentence_length": round(text.average_sentence_length, 3),
+            "average_word_length": round(text.average_word_length, 3),
+            "percentage_known": None,
+        }
+    )
 
 
 @textbank_bp.route("/assess-comprehension", methods=["GET"])
@@ -184,6 +186,16 @@ def assess_comprehension():
     percentage_known = total_known_words / sum(lemma_counter.values()) * 100
 
     return jsonify(percentage_known=round(percentage_known, 3))
+
+
+@textbank_bp.route("/read-text", methods=["GET"])
+def read_text():
+    text_id = request.args.get("id")
+
+    # get the text
+    text = Text.query.filter_by(id=text_id).first()
+
+    return jsonify(title=text.title, content=text.content)
 
 
 @textbank_bp.route("/add-private-text", methods=["POST"])
