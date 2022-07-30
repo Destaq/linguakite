@@ -23,6 +23,7 @@ from models.user import User
 from models.word import Word
 from models.text import Text
 from models.tag import Tag
+from models.log import Log
 
 from models.associations.user_word import UserWord
 from models.associations.user_text import UserText

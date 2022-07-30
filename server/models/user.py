@@ -12,6 +12,7 @@ class User(db.Model):
 
     words = db.relationship("UserWord", back_populates="user")
     texts = db.relationship("UserText", back_populates="user")
+    logs = db.relationship("Log", back_populates="user")
 
     def __init__(self, name, email, password):
         self.name = name

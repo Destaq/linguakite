@@ -14,11 +14,14 @@ class UserText(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
     text_id = db.Column(db.Integer, db.ForeignKey("text.id"), primary_key=True)
 
-    current_page = db.Column(db.Integer, index=True, nullable=False)  # 0 = not started, X/Y = finished X pages out of Y (so calculate percentage), (Y + 1) / Y = completed
-    # percentage is always calculated as (current - 1) / Y, because e.g. opening book does not mean that they read to the bottom of it
+    total_pages = db.Column(db.Integer, index=True, nullable=False)
+    current_page = db.Column(db.Integer, index=True, nullable=False)
+    # used to calculate percentage progress
+    # percentage calculation = current_page/total_pages * 100
 
-    def __init__(self, user_id, text_id, current_page=0):  # val of 0 means not started
+    def __init__(self, user_id, text_id, current_page, total_pages):
         self.user_id = user_id
         self.text_id = text_id
         # total pages is already an attribute of the text
+        self.total_pages = total_pages
         self.current_page = current_page

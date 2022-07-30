@@ -27,7 +27,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
             </svg>
           </div>
-          <p class="whitespace-pre-line fle flex-1 overflow-y-auto my-2">
+          <div class="whitespace-pre-line fle flex-1 overflow-y-auto my-2">
             <span v-for="(word, index) in chunks[currentPage - 1]" :key="index">
               <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
                 :data-end="word.word[0]" v-if="index === 0 && currentPage > 1">{{ word.word.slice(2, word.word.length)
@@ -35,13 +35,17 @@
               <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
                 :data-end="word.word[0]" v-else>{{ word.word.slice(1, word.word.length) }}</span>
             </span>
-          </p>
+          </div>
           <div class="flex border-t rounded-none w-full">
             <div class="btn-group w-full mx-auto grid grid-cols-12 mt-1 gap-x-0.5">
               <button class="btn btn-sm col-span-1" :class="currentPage <= 1 ? 'btn-disabled' : ''"
                 @click="updateProgress(-1)" v-if="chunks.length > 1">«</button>
-              <button v-if="chunks.length === 1 || currentPage === chunks.length" class="btn btn-sm w-full"
-                :class="chunks.length === 1 ? 'col-span-12' : 'col-span-10'">Mark Complete</button>
+              <button v-if="(chunks.length === 1 && currentPage <= chunks.length) || (currentPage === chunks.length && currentPage <= chunks.length)" class="btn btn-sm w-full"
+                :class="chunks.length === 1 ? 'col-span-12' : 'col-span-10'" @click="updateProgress(1)">Mark
+                Complete</button>
+              <button v-if="currentPage > chunks.length" class="btn btn-sm w-full col-span-12" @click="updateProgress(-1)">
+                Relearn Article
+              </button>
               <button class="btn col-span-10 btn-sm text-center" v-if="chunks.length > currentPage">Page {{ currentPage
               }}</button>
               <button class="btn btn-sm col-span-1" :class="currentPage === chunks.length ? 'btn-disabled' : ''"
@@ -55,8 +59,8 @@
           <h3 class="text-lg font-semibold mx-auto text-center -mt-1.5">Help</h3>
           <div class="h-1.5"></div>
         </div>
-        <div class="grid grid-rows-4 h-full">
-          <div class="row-span-3 mt-2">
+        <div class="grid grid-rows-3 h-full">
+          <div class="row-span-2 mt-2">
             <p>{{ clickedWord }}<span v-if="clickedWordTranslation !== ''"> — {{ clickedWordTranslation }}</span><span
                 v-if="clickedWordRank !== ''"> — #{{ clickedWordRank }}</span></p>
             <p class="italic font-light mt-2">{{ clickedWordDefinition }}</p>
@@ -66,9 +70,15 @@
               v-if="clickedWord !== ''">Mark as&nbsp;<span v-if="known === false">known</span><span
                 v-else>unknown</span></button>
           </div>
-          <div class="border-t items-center flex">
-            <p class="text-xl font-semibold text-center mx-auto">{{ timerTime }}</p>
-          </div>
+          <blockquote class="relative p-4 border-t items-center text-md italic text-neutral-600 border-neutral-500">
+            <p class="mb-4">{{ quoteData.q }}</p>
+            <cite class="flex items-center">
+              <div class="flex flex-col items-start">
+                <span class="mb-1 text-sm italic font-bold">{{ quoteData.a }}</span>
+              </div>
+            </cite>
+            <p class="text-2xs absolute bottom-0">Quote provided by <a href="https://zenquotes.io/" target="_blank" class="link">ZenQuotes API</a></p>
+          </blockquote>
         </div>
       </div>
     </div>
@@ -84,7 +94,6 @@ export default {
       content: "",
       ttsOn: false,
       simplification: "No Simplification",
-      timerTime: "02:25:53",
       clickedWord: "",
       clickedWordLemma: "",
       clickedWordTranslation: "",
@@ -93,13 +102,38 @@ export default {
       known: false,
       chunks: [],
       currentPage: 1,
-      synth: null
+      synth: null,
+      startDate: null,
+      elapsedTime: 0,
+      quoteData: {
+        q: "Show me a family of readers, and I will show you the people who move the world.",
+        a: "Napoleon Bonaparte"
+      } // inspirational quote on bottom right
     }
   },
   head() {
     return {
       title: this.title,
     }
+  },
+  mounted() {
+    // https://stackoverflow.com/a/41480142/12876940
+    // https://stackoverflow.com/questions/56550164/how-can-i-mimic-onbeforeunload-in-a-vue-js-2-application
+
+    this.startDate = new Date();
+
+    window.addEventListener('beforeunload', this.logReadingTime);
+    window.addEventListener('focus', this.focusFunc);
+    window.addEventListener('blur', this.blurFunc);
+  },
+  beforeDestroy() {
+    window.removeEventListener('beforeunload', this.logReadingTime);
+    window.removeEventListener('focus', this.focusFunc);
+    window.removeEventListener('blur', this.blurFunc);
+  },
+  beforeRouteLeave(_to, _from, next) {
+    this.logReadingTime();
+    next();
   },
   async fetch() {
     const authToken = this.$auth.strategies.cookie.token.$storage._state["_token.cookie"];
@@ -114,10 +148,39 @@ export default {
 
     this.title = response.data.title;
     this.content = response.data.content;
+    this.currentPage = parseInt(response.data.start_page);
+
+    // NOTE: quite heavy free rate limiting
+    // also fetch from Zen Quotes API
+    try {
+      const quoteResponse = await this.$axios.get("https://zenquotes.io/api/random");
+      this.quoteData = quoteResponse.data[0];
+    } catch {
+      // still being rate limited
+    }
+
     this.splitContentToChunks();
   },
   methods: {
     // TODO: timer (+ API call)
+    async logReadingTime() {
+      const endDate = new Date();
+      const spentTime = endDate.getTime() - this.startDate.getTime();
+      this.elapsedTime += spentTime;
+
+      // send api call to log reading time
+      await this.$axios.post("/api/log-time", {
+        elapsed_time: this.elapsedTime,
+      });
+    },
+    focusFunc() {
+      this.startDate = new Date();
+    },
+    blurFunc() {
+      const endDate = new Date();
+      const spentTime = endDate.getTime() - this.startDate.getTime();
+      this.elapsedTime += spentTime;
+    },
     simplifyContent() {
       // TODO
     },
@@ -127,7 +190,7 @@ export default {
       window.speechSynthesis.speak(sound);
     },
     async wordClicked(word) {
-      const wordNoPunc = word.word.replace(/[.,\/#!$%\^&\*;:{}=\_`~()]/g, "")
+      const wordNoPunc = word.word.replace(/[.,\/#!$%\^&\*;:{}=\_`~()\"\'\“]/g, "")
 
       this.clickedWord = wordNoPunc.toLowerCase();
       this.clickedWordLemma = word.lemma;
@@ -185,15 +248,30 @@ export default {
       this.synth.addEventListener('end', () => {
         this.ttsOn = false;
       });
-    }, // don't forget to toggle at end
+    },
     stopPageTTS() {
       window.speechSynthesis.cancel(this.synth);
       this.ttsOn = false;
     },
-    updateProgress(value) {
+    async updateProgress(value) {
       this.currentPage += value;
 
-      // TODO: api call to update progress and times seen
+      var pageToUpdateSend;
+
+      if (this.currentPage > this.chunks.length) {
+        // we've reached the end
+        pageToUpdateSend = this.currentPage - 1;
+      } else {
+        // all clear, can parse chunks
+        pageToUpdateSend = this.currentPage;
+      }
+
+      await this.$axios.post("/api/update-text-progress", {
+        id: this.$route.params.id,
+        page: this.currentPage,
+        totalPages: this.chunks.length,
+        chunkLemmas: this.chunks[pageToUpdateSend - 1].map(word => word.lemma),
+      });
     },
     splitContentToChunks() {
       var words = this.content.map(e => e.word)
@@ -251,6 +329,8 @@ export default {
       if (chunk_length > 0) {
         this.chunks.push(chunk_group);
       }
+
+      console.log(this.chunks.length, this.currentPage)
     },
     wordStyling(word) {
       let output = word.known ? 'bg-normal underline decoration-2' : 'bg-red-400 underline decoration-2';

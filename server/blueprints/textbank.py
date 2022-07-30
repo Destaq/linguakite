@@ -5,6 +5,7 @@ from extensions import db
 from models.user import User
 from models.tag import Tag
 from models.word import Word
+from models.log import Log
 from models.text import Text, text_tag_association_table
 from models.associations.user_word import UserWord
 from models.associations.user_text import UserText
@@ -218,7 +219,10 @@ def read_text():
     for word in re.split(" ", text.content):
         # check if word is whitespace with regex
         if not len(word) == 0:
-            lemma = nlp(word)[0].lemma_  # TODO: replace lemmatized_content with this, so that the size is the same
+            index_val = 0
+            if word[0] == "\n" or word[0] == "“" or word[0] == "'" or word[0] == "‘" or word[0] == '"':
+                index_val = 1
+            lemma = nlp(word)[index_val].lemma_  # TODO: replace lemmatized_content with this, so that the size is the same
             lemma_ob = Word.query.filter_by(lemma=lemma).first()
             
             known = False
@@ -238,7 +242,15 @@ def read_text():
                 }
             )
 
-    return jsonify(title=text.title, content=output_content)
+    history_match = UserText.query.filter_by(user_id=current_user.id, text_id=text_id).first()
+    if history_match:
+        # the user is already somewhat through the text, they get pushed to that page
+        start_page = history_match.current_page + 1
+    else:
+        # the user is not yet through the text, they get pushed to the first page
+        start_page = 1
+
+    return jsonify(title=text.title, content=output_content, start_page=start_page)
 
 
 @textbank_bp.route("/add-private-text", methods=["POST"])
@@ -292,7 +304,6 @@ def get_translation():
 @textbank_bp.route("/update-word-status", methods=["POST"])
 @jwt_required()
 def update_word_status():
-    word = request.get_json()["word"]
     word_lemma = request.get_json()["word_lemma"]
     known = request.get_json()["known"]
 
@@ -313,8 +324,83 @@ def update_word_status():
             db.session.commit()
 
         # create the user word
-        user_word = UserWord(current_user.id, word_ob.id, 0)
+        user_word = UserWord(current_user.id, word_ob.id, 0)  # zero because it gets changed on page clicks
         db.session.add(user_word)
+        db.session.commit()
+
+    return jsonify(success=True)
+
+
+@textbank_bp.route("/update-text-progress", methods=["POST"])
+@jwt_required()
+def update_text_status():
+    text_id = request.get_json()["id"]
+    current_page = request.get_json()["page"] - 1  # as 1 on frontend, but zero means not started
+    total_pages = request.get_json()["totalPages"]
+    lemma_list = request.get_json()["chunkLemmas"] # list of lemmas on page
+
+    if current_page == 0:
+        # we are discarding the started text
+        user_text_match = UserText.query.filter_by(user_id=current_user.id, text_id=text_id).first()
+        if user_text_match:
+            db.session.delete(user_text_match)
+            db.session.commit()
+    else:
+        user_text_match = UserText.query.filter_by(user_id=current_user.id, text_id=text_id).first()
+        if not user_text_match:
+            user_text_match = UserText(current_user.id, text_id, current_page, total_pages)
+            db.session.add(user_text_match)
+            db.session.commit()
+        else:
+            user_text_match.current_page = current_page
+            user_text_match.total_pages = total_pages
+            db.session.commit()
+
+    # we also need to update user_word values; update the number_of_times_seen of seeing the words
+    for lemma in lemma_list:
+        word_ob = Word.query.filter_by(lemma=lemma).first()
+        if word_ob:
+            user_word_match = UserWord.query.filter_by(user_id=current_user.id, word_id=word_ob.id).first()
+            if user_word_match:
+                user_word_match.number_of_times_seen += 1
+                db.session.commit()
+            else:
+                # we are not randomly adding words to the bank because they were just seen
+                pass
+
+
+    return jsonify(success=True)
+
+
+@textbank_bp.route("/log-time", methods=["POST"])
+@jwt_required()
+def log_time():
+    elapsed_time = request.get_json()["elapsed_time"]  # in milliseconds
+    
+    # convert to seconds
+    elapsed_time_seconds = elapsed_time / 1000
+
+    # and round
+    elapsed_time_seconds = round(elapsed_time_seconds)
+
+    # get today's date
+    date = datetime.utcnow()
+
+
+    # check if log exists for this date and this user
+    # when comparing the date, just compare the date, not full timestamp
+    log_match = Log.query.filter(
+        Log.user_id == current_user.id,
+        Log.date == date.date()).first()
+
+    if not log_match:
+        # create a new log
+        log_match = Log(current_user, date.date(), elapsed_time_seconds)
+        db.session.add(log_match)
+        db.session.commit()
+    else:
+        # update the log
+        log_match.elapsed_time_seconds += elapsed_time_seconds
         db.session.commit()
 
     return jsonify(success=True)
