@@ -6,11 +6,9 @@
           <div class="grid grid-cols-5 gap-x-2 border-b">
             <select class="select select-ghost w-full mx-auto italic font-medium p-0 focus:outline-none my-auto"
               v-model="simplification" @change="simplifyContent">
-              <option>No Simplification</option>
-              <option>Little Simplification</option>
-              <option>Medium Simplification</option>
-              <option>More Simplification</option>
-              <option>Most Simplification</option>
+              <option>Original Text</option>
+              <option>Condensed Text</option>
+              <option>Synonymized Text</option>
             </select>
             <h2 class="text-xl font-bold col-span-3 text-center my-auto underline cursor-pointer">{{ title }}</h2>
             <svg v-if="ttsOn === false" xmlns="http://www.w3.org/2000/svg"
@@ -93,7 +91,7 @@ export default {
       title: "",
       content: "",
       ttsOn: false,
-      simplification: "No Simplification",
+      simplification: "Original Text",
       clickedWord: "",
       clickedWordLemma: "",
       clickedWordTranslation: "",
