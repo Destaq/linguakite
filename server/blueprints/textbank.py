@@ -1,12 +1,16 @@
+import spacy
+import re
+import deepl
+import os
+
 from typing import Text
 from flask import Blueprint, request, jsonify
-from itsdangerous import json
 from extensions import db
 from models.user import User
 from models.tag import Tag
 from models.word import Word
 from models.log import Log
-from models.text import Text, text_tag_association_table
+from models.text import Text
 from models.associations.user_word import UserWord
 from models.associations.user_text import UserText
 from flask_jwt_extended import (
@@ -17,10 +21,7 @@ from sqlalchemy import func
 from datetime import datetime
 from collections import Counter
 from dotenv import load_dotenv
-import spacy
-import re
-import deepl
-import os
+
 
 load_dotenv()
 
@@ -207,22 +208,33 @@ def assess_comprehension():
 @jwt_required()
 def read_text():
     text_id = request.args.get("id")
+    content_type = request.args.get("type")
 
     # get the text
     text = Text.query.filter_by(id=text_id).first()
 
+    if content_type == "Original Text":
+        content = text.content
+        lemmatized_content = text.lemmatized_content
+    elif content_type == "Synonymized Text":
+        content = text.synonymized_text
+        lemmatized_content = text.lemmatized_synonymized_content
+    elif content_type == "Summarized Content":
+        content = text.summarized_content
+        lemmatized_content = text.lemmatized_summarized_content
+
     # replace all 2x newlines with a space and a newline
-    text.content = text.content.replace("\n\n", " \n")
+    content = content.replace("\n\n", " \n")
+    content = re.split(" ", content)
+    lemmatized_content = re.split(" ", lemmatized_content)  # no newlines here by default
 
 
     output_content = []
-    for word in re.split(" ", text.content):
-        # check if word is whitespace with regex
-        if not len(word) == 0:
-            index_val = 0
-            if word[0] == "\n" or word[0] == "“" or word[0] == "'" or word[0] == "‘" or word[0] == '"':
-                index_val = 1
-            lemma = nlp(word)[index_val].lemma_  # TODO: replace lemmatized_content with this, so that the size is the same
+    for i in range(len(content)):
+        word = content[i]
+        lemma = lemmatized_content[i]
+
+        if len(word) > 0:
             lemma_ob = Word.query.filter_by(lemma=lemma).first()
             
             known = False
@@ -404,3 +416,23 @@ def log_time():
         db.session.commit()
 
     return jsonify(success=True)
+
+
+# one-time function
+@textbank_bp.route("/text-updater", methods=["GET"])
+def update_texts():
+    """
+    This function will add in all the (3x) lemmas for every text in the database,
+    and also their summaries + simplifications.
+    """
+
+    all_texts = Text.query.all()
+
+    for i in range(len(all_texts)):
+        print(f"{i:06d} / {len(all_texts)}", end="\r")
+        text = all_texts[i]
+        text.synonymized_content = text.synonymize_content(text.content)
+        text.summarized_content = text.summarize_content(text.content)
+        (text.lemmatized_content, text.lemmatized_synonymized_content, text.lemmatized_summarized_content) = text.lemmatize_all_content(text.content)
+        db.session.add(text)
+        db.session.commit()

@@ -45,7 +45,6 @@
 
       <!-- if authenticated -->
       <div v-else>
-        <!-- TODO: below button opens up 'document upload' modal (copy & paste in content, then add title + tags, rest done automatically) -->
         <label for="custom-text-modal" class="btn modal-button btn-outline btn-sm mr-5">+</label>
 
         <!-- Put this part before </body> tag -->

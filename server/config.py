@@ -19,7 +19,6 @@ class Config(object):
 class ProductionConfig(Config):
     DEBUG = False
     # JWT_COOKIE_SECURE = True  # only over https
-    # TODO: greater security by setting up samesite cookie on production
 
 
 class StagingConfig(Config):

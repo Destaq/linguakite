@@ -43,5 +43,3 @@ print(len(lemmas))
 
 file.close()
 write_file.close()
-
-# TODO: connect this to the `word` class (no freq whatnot)
