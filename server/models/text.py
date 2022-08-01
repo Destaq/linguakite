@@ -197,13 +197,7 @@ class Text(db.Model):
         self.average_sentence_length = self.calculate_average_sentence_length(content)
         self.average_word_length = self.calculate_average_word_length(content)
         self.total_words = len(content.split())
-        self.unique_words = self.calculate_unique_words(self.lemmatized_content)
-        self.difficulty = self.calculate_difficulty(
-            self.unique_words,
-            self.total_words,
-            self.average_word_length,
-            self.average_sentence_length,
-        )
+
         self.synonymized_content = self.synonymize_content(content)
         self.summarized_content = self.summarize_content(content)
         (
@@ -211,6 +205,14 @@ class Text(db.Model):
             self.lemmatized_synonymized_content,
             self.lemmatized_summarized_content,
         ) = self.lemmatize_all_content(content)
+
+        self.unique_words = self.calculate_unique_words(self.lemmatized_content)
+        self.difficulty = self.calculate_difficulty(
+            self.unique_words,
+            self.total_words,
+            self.average_word_length,
+            self.average_sentence_length,
+        )
 
     def calculate_total_pages(self, content):
         """
@@ -370,6 +372,8 @@ class Text(db.Model):
 
 
     def synonymize_content(self, content):
+        # text here will be split if it has contractions, and thus render slightly incorrectly
+        # but that can only be fixed client-side after ~20 mins of attempts
         paragraphs = re.split("\n\s*", content)
         paragraphs = [paragraph for paragraph in paragraphs if paragraph != ""]
 

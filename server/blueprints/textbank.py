@@ -217,9 +217,9 @@ def read_text():
         content = text.content
         lemmatized_content = text.lemmatized_content
     elif content_type == "Synonymized Text":
-        content = text.synonymized_text
+        content = text.synonymized_content
         lemmatized_content = text.lemmatized_synonymized_content
-    elif content_type == "Summarized Content":
+    elif content_type == "Summarized Text":
         content = text.summarized_content
         lemmatized_content = text.lemmatized_summarized_content
 
@@ -227,6 +227,39 @@ def read_text():
     content = content.replace("\n\n", " \n")
     content = re.split(" ", content)
     lemmatized_content = re.split(" ", lemmatized_content)  # no newlines here by default
+
+    for word in content:
+        if word.isspace() or word == "":
+            content.remove(word)
+
+    # print(len(content))
+    # print(content)
+    # print(len(lemmatized_content))
+    # print(lemmatized_content)
+
+    if content_type == "Synonymized Text":
+        for word in content:
+            if word[-1] == "’" or word[-1] == "(":
+                # connect this word with the next word
+                word_fragment_index = content.index(word)
+                content[word_fragment_index] = word + content[word_fragment_index + 1]
+
+
+                # and remove next word, from that index
+                content.pop(word_fragment_index + 1)
+
+                # also from lemmatized_content
+                lemmatized_content.pop(word_fragment_index + 1)
+            elif word == ")":
+                # connect this word with the preview word
+                word_fragment_index = content.index(word)
+                content[word_fragment_index] = content[word_fragment_index - 1] + word
+
+                # and remove previous word, from that index
+                content.pop(word_fragment_index - 1)
+
+                # also from lemmatized_content
+                lemmatized_content.pop(word_fragment_index - 1)
 
 
     output_content = []
@@ -309,9 +342,13 @@ def add_private_text():
 def get_translation():
     word = request.args.get("word")
 
-    translation = translator.translate_text(word, target_lang="zh", source_lang="en")
+    try:
+        translation = translator.translate_text(word, target_lang="zh", source_lang="en")
 
-    return jsonify(translation=translation.text)
+        return jsonify(translation=translation.text)
+    except ValueError:
+        # clicked on a word that can't be translated, like brackets in summary, ignore
+        return jsonify(translation="")
 
 @textbank_bp.route("/update-word-status", methods=["POST"])
 @jwt_required()
@@ -416,23 +453,3 @@ def log_time():
         db.session.commit()
 
     return jsonify(success=True)
-
-
-# one-time function
-@textbank_bp.route("/text-updater", methods=["GET"])
-def update_texts():
-    """
-    This function will add in all the (3x) lemmas for every text in the database,
-    and also their summaries + simplifications.
-    """
-
-    all_texts = Text.query.all()
-
-    for i in range(len(all_texts)):
-        print(f"{i:06d} / {len(all_texts)}", end="\r")
-        text = all_texts[i]
-        text.synonymized_content = text.synonymize_content(text.content)
-        text.summarized_content = text.summarize_content(text.content)
-        (text.lemmatized_content, text.lemmatized_synonymized_content, text.lemmatized_summarized_content) = text.lemmatize_all_content(text.content)
-        db.session.add(text)
-        db.session.commit()

@@ -50,20 +50,20 @@
           <div class="flex border-t rounded-none w-full">
             <div class="btn-group w-full mx-auto grid grid-cols-12 mt-1 gap-x-0.5">
               <button class="btn btn-sm col-span-1" :class="currentPage <= 1 ? 'btn-disabled' : ''"
-                @click="updateProgress(-1)" v-if="chunks.length > 1">«</button>
+                @click="updateProgress(-1)" v-if="chunks.length > 1 && currentPage <= chunks.length">«</button>
               <button
                 v-if="(chunks.length === 1 && currentPage <= chunks.length) || (currentPage === chunks.length && currentPage <= chunks.length)"
                 class="btn btn-sm w-full" :class="chunks.length === 1 ? 'col-span-12' : 'col-span-10'"
                 @click="updateProgress(1)">Mark
                 Complete</button>
-              <button v-if="currentPage > chunks.length" class="btn btn-sm w-full col-span-12"
+              <button v-if="currentPage > chunks.length && fetchFinished === true" class="btn btn-sm w-full col-span-12"
                 @click="updateProgress(-1)">
                 Relearn Article
               </button>
               <button class="btn col-span-10 btn-sm text-center" v-if="chunks.length > currentPage">Page {{ currentPage
               }}</button>
               <button class="btn btn-sm col-span-1" :class="currentPage === chunks.length ? 'btn-disabled' : ''"
-                @click="updateProgress(1)" v-if="chunks.length > 1">»</button>
+                @click="updateProgress(1)" v-if="chunks.length > 1 && currentPage <= chunks.length">»</button>
             </div>
           </div>
         </div>
@@ -120,6 +120,7 @@ export default {
       synth: null,
       startDate: null,
       elapsedTime: 0,
+      fetchFinished: false,
       quoteData: {
         q: "Show me a family of readers, and I will show you the people who move the world.",
         a: "Napoleon Bonaparte"
@@ -197,6 +198,7 @@ export default {
       this.elapsedTime += spentTime;
     },
     async fetchContentAgain() {
+      this.fetchFinished = false;
       this.chunks = [];  // to show loading button again
 
       const response = await this.$axios.get("/api/read-text", {
@@ -218,7 +220,12 @@ export default {
       window.speechSynthesis.speak(sound);
     },
     async wordClicked(word) {
-      const wordNoPunc = word.word.replace(/[.,\/#!$%\^&\*;:{}=\_`~()\"\'\“]/g, "")
+      var wordNoPunc = word.word.replace(/[.,\/#!$%\^&\*;:{}=\_`~()\"\'\“]/g, "")
+
+      // also if ’ in wordNoPunc, remove it and anything after it
+      if (wordNoPunc.includes("’")) {
+        wordNoPunc = wordNoPunc.split("’")[0];
+      }
 
       this.clickedWord = wordNoPunc.toLowerCase();
       this.clickedWordLemma = word.lemma;
@@ -304,7 +311,6 @@ export default {
     splitContentToChunks() {
       var words = this.content.map(e => e.word)
 
-      // TODO: if word IS punc (or punc and space, remove beginning left space)
 
       var chunk = {}
       var chunk_group = [];
@@ -313,6 +319,19 @@ export default {
       for (var i = 0; i < words.length; i++) {
         // update chunk length
         chunk_length += words[i].length + 1; // just forget serversid
+
+        if (i > 1) {
+          if (words[i - 1].charAt(words[i - 1].length - 1) === "." || words[i - 1].charAt(words[i - 1].length - 1) === "?" || words[i - 1].charAt(words[i - 1].length - 1) === "!") {
+            // words[i] = words[i].replace(/[.,\/#!$%\^&\*;:{}=\_`~()\"\'\“]/g, "")
+            // also capitalize
+
+            if (words[i].charAt(0) === "\n" && this.simplificationType === "Synonymized Text") {
+              words[i] = words[i].charAt(0) + words[i].charAt(1).toUpperCase() + words[i].slice(2);
+            } else{
+              words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+            }
+          }
+        }
 
         if (chunk_length > 2500 &&
           words[i].indexOf("\n") > -1
@@ -360,7 +379,7 @@ export default {
         this.chunks.push(chunk_group);
       }
 
-      console.log(this.chunks.length, this.currentPage)
+      this.fetchFinished = true;
     },
     wordStyling(word) {
       let output = word.known ? 'bg-normal underline decoration-2' : 'bg-red-400 underline decoration-2';
