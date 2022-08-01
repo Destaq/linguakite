@@ -577,7 +577,7 @@ def get_user_info():
         { "label": "Total characters read", "value": total_characters_read }
     )
 
-    achievements = ["Started Flying"]
+    achievements = [["Started Flying", "Signed up for LinguaKite"]]
 
     if total_characters_read > 10000 - 1:
         achievements.append(["Dipped Your Toes", "Read over 10000 characters"])
@@ -649,7 +649,7 @@ def get_user_info():
         })
     else:
         statistics.append({
-            "label": "CEFR Proficiency", "value": "<A1"
+            "label": "CEFR Proficiency", "value": "Below A1"
         })
 
     return jsonify(
