@@ -14,6 +14,8 @@ class User(db.Model):
     texts = db.relationship("UserText", back_populates="user")
     logs = db.relationship("Log", back_populates="user")
 
+    quizzes_done = db.Column(db.Integer, default=0)  # used for statistics
+
     def __init__(self, name, email, password):
         self.name = name
         self.email = email
