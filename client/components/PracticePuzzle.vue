@@ -1,6 +1,9 @@
 <template>
   <div class="card w-4/5 p-4 mx-auto font-serif my-2 border rounded-none" :class="computedBackground">
     <p class="font-semibold">#{{ puzzleNumber }}:&nbsp; {{ puzzle["type"] }}</p>
+    <div v-if="puzzle['type'] === 'Order Words'" class="ml-12 italic">
+      <p>{{ puzzle['context'] }}</p>
+    </div>
     <div v-if="puzzle['type'] === 'Order Words' || puzzle['type'] === 'Order Sentences'">
       <ol class="list-decimal">
         <li v-for="(element, index) in puzzle['question']" :key="index" class="ml-12">
@@ -9,13 +12,12 @@
       </ol>
     </div>
     <div v-else>{{ puzzle["question"] }}</div>
-    <hr class="mt-2 border-secondary">
     <div v-if="puzzle['type'] === 'Multiple Choice'">
       <div class="grid grid-cols-4 gap-x-2 form-control">
         <div v-for="(option, index) in puzzle['options']" :key="index">
-          <label class="label w-2/3 mx-auto cursor-pointer border-dashed border mt-2 border-secondary">
-            <input type="radio" :value="option" class="checkbox" v-model="userAnswer" />
-            <span class="label-text mr-4">{{ option }}</span>
+          <label class="label w-2/3 mx-auto cursor-pointer border-secondary mt-2" :class="userAnswer === option ? 'font-bold underline' : ''">
+            <input type="radio" :value="option" class="invisible w-0" v-model="userAnswer" />
+            <span class="label-text mx-auto">{{ option }}</span>
           </label>
         </div>
       </div>

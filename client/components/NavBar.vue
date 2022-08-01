@@ -51,7 +51,7 @@
         <input type="checkbox" id="custom-text-modal" class="modal-toggle" ref="modalToggle" />
         <label for="custom-text-modal" class="modal cursor-pointer font-serif">
           <label class="modal-box relative w-1/2 max-w-none" for="">
-            <h3 class="text-lg font-bold text-center">Upload Private Text</h3>
+            <h3 class="text-lg font-bold text-center">Upload Text</h3>
             <form @submit.prevent="uploadPrivateText" class="form-control p-2 mt-2">
               <div class="grid grid-cols-2 gap-x-2"><input type="text"
                   placeholder="Breathing Oyxgen Linked to Staying Alive" v-model="title"

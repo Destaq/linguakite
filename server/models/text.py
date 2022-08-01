@@ -124,7 +124,7 @@ punctuation = "".join(punctuation)
 
 class Text(db.Model):
     """
-    A class that stores details about all texts in the database, including private texts.
+    A class that stores details about all texts in the database, including personal texts.
 
     However, the texts will actually be accessed through the UserText Association Object once more, as there is an additional property (page_progress, which is then used to calculate normal progress ~> the final 'finished' button updates pages > # of pages, and hence means it was completed).
 
