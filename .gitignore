@@ -2,4 +2,4 @@
 *.pyc
 
 server/.env
-server/data
+server/data/medium_articles.csv
