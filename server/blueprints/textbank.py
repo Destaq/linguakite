@@ -1,3 +1,4 @@
+from matplotlib.pyplot import text
 import spacy
 import re
 import deepl
@@ -18,7 +19,7 @@ from flask_jwt_extended import (
     jwt_required,
 )
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
 from dotenv import load_dotenv
 
@@ -453,3 +454,209 @@ def log_time():
         db.session.commit()
 
     return jsonify(success=True)
+
+
+@textbank_bp.route("/update-quizzes-done", methods=["POST"])
+@jwt_required()
+def update_quizzes_done():
+    user = User.query.filter_by(id=current_user.id).first()
+
+    user.quizzes_done += 1
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify(success=True)
+
+@textbank_bp.route("/update-daily-goal", methods=["POST"])
+@jwt_required()
+def update_daily_goal():
+    user = User.query.filter_by(id=current_user.id).first()
+    minutes = int(request.get_json()["minutes"])
+
+    user.goal_length_minutes = minutes
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify(success=True)
+
+
+@textbank_bp.route("/user-info", methods=["GET"])
+@jwt_required()
+def get_user_info():
+    user = User.query.filter_by(id=current_user.id).first()
+
+    today_date = datetime.utcnow()
+    today_date = today_date.date()
+
+    # find the log for today and calculate number of seconds read
+    log_match = Log.query.filter(
+        Log.user_id == current_user.id,
+        Log.date == today_date).first()
+    seconds_read = log_match.elapsed_time_seconds
+
+    # get all of the articles that the user has read
+    # where current_page = total_pages (it is complete)
+    read_articles_unformatted = UserText.query.filter(
+        UserText.user_id == current_user.id,
+        UserText.current_page == UserText.total_pages).all()
+
+    read_articles = []
+    for user_text_object in read_articles_unformatted:
+        read_articles.append(
+            {
+                "id": user_text_object.text_id,
+                "title": user_text_object.text.title,
+            }
+        )
+
+    
+    # now rinse and repeat but for when the article has NOT been completely finished
+    # where current_page < total_pages (it is not complete)
+    reading_articles_unformatted = UserText.query.filter(
+        UserText.user_id == current_user.id,
+        UserText.current_page < UserText.total_pages).all()
+    
+
+    reading_articles = []
+    for user_text_object in reading_articles_unformatted:
+        reading_articles.append(
+            {
+                "id": user_text_object.text_id,
+                "title": user_text_object.text.title,
+                "currentPage": user_text_object.current_page,
+                "totalPages": user_text_object.total_pages,
+            }
+        )
+
+
+    # now just generate statistics manually
+    statistics = []
+    statistics.append(
+        { "label": "Number of texts read", "value": len(read_articles) }
+    )
+
+    statistics.append({
+        "label": "Number of quizzes taken",
+        "value": user.quizzes_done
+    })
+
+    still_date = True
+    consecutive_days_read = 0
+    
+    # starting from today, iterate backwards until there is not a log entry to calculate consecutive days read
+    while still_date:
+        date = today_date - timedelta(days=consecutive_days_read)
+        log_match = Log.query.filter(
+            Log.user_id == current_user.id,
+            Log.date == date).first()
+        if log_match:
+            consecutive_days_read += 1
+        else:
+            still_date = False
+
+
+    statistics.append(
+        { "label": "Consecutive days read", "value": consecutive_days_read }
+    )
+
+    # add user wordbank size
+    user_wordbank_size = UserWord.query.filter_by(user_id=current_user.id).count()
+    statistics.append(
+        { "label": "User wordbank size", "value": user_wordbank_size }
+    )
+
+    # add total characters read
+    total_characters_read = 0
+    for article in read_articles_unformatted:
+        total_characters_read += len(article.text.content)
+
+    for article in reading_articles_unformatted:
+        total_characters_read += article.current_page * 2500
+
+    statistics.append(
+        { "label": "Total characters read", "value": total_characters_read }
+    )
+
+    achievements = ["Started Flying"]
+
+    if total_characters_read > 10000 - 1:
+        achievements.append(["Dipped Your Toes", "Read over 10000 characters"])
+    if total_characters_read > 100000 - 1:
+        achievements.append(["Big Reader", "Read over 100000 characters"])
+    if total_characters_read > 500000 - 1:
+        achievements.append(["Book Worm", "Read over 500000 characters"])
+    if total_characters_read > 1000000 - 1:
+        achievements.append(["Book Monster", "Read over 1000000 characters"])
+
+    if user.quizzes_done > 5 - 1:
+        achievements.append(["Practice Makes Perfect", "Took 5 quizzes"])
+    if user.quizzes_done > 25 - 1:
+        achievements.append(["Quiz Master", "Took 25 quizzes"])
+
+    if consecutive_days_read > 7 - 1:
+        achievements.append(["Consecutive Reader", "Read for 7 days straight"])
+    if consecutive_days_read > 30 - 1:
+        achievements.append(["Unstoppable", "Read for 30 days straight"])
+    
+
+    if len(reading_articles) > 1 - 1:
+        achievements.append(["First Article", "Read 1 article"])
+    if len(read_articles) > 10 - 1:
+        achievements.append(["I'm Starting to Like This...", "Read 10 articles"])
+    if len(read_articles) > 25 - 1:
+        achievements.append(["I Have a Bookshelf", "Read 25 articles"])
+    if len(read_articles) > 50 - 1:
+        achievements.append(["Librarian", "Read 50 articles"])
+    if len(read_articles) > 100 - 1:
+        achievements.append(["Bibliophile", "Read 100 articles"])
+
+    if len(reading_articles) > 5 - 1:
+        achievements.append(["Can't Make up My Mind", "Have 5 articles in progress"])
+
+    if user_wordbank_size > 1000 - 1:
+        achievements.append(["Mini Wordbank", "Have 1000 words in your wordbank"])
+    if user_wordbank_size > 5000 - 1:
+        achievements.append(["Medium Wordbank", "Have 5000 words in your wordbank"])
+    if user_wordbank_size > 10000 - 1:
+        achievements.append(["Large Wordbank", "Have 10000 words in your wordbank"])
+    if user_wordbank_size > 25000 - 1:
+        achievements.append(["Incredible Wordbank", "Have 25000 words in your wordbank"])
+
+    # https://languagelearning.stackexchange.com/questions/3061/what-are-estimates-of-vocabulary-size-for-each-cefr-level
+    if user_wordbank_size > 600:
+        statistics.append({
+            "label": "CEFR Proficiency", "value": "A1"
+        })
+    elif user_wordbank_size > 1200:
+        statistics.append({
+            "label": "CEFR Proficiency", "value": "A1"
+        })
+    elif user_wordbank_size > 2500:
+        statistics.append({
+            "label": "CEFR Proficiency", "value": "A1"
+        })
+    elif user_wordbank_size > 5000:
+        statistics.append({
+            "label": "CEFR Proficiency", "value": "A1"
+        })
+    elif user_wordbank_size > 10000:
+        statistics.append({
+            "label": "CEFR Proficiency", "value": "A1"
+        })
+    elif user_wordbank_size > 20000:
+        statistics.append({
+            "label": "CEFR Proficiency", "value": "A1"
+        })
+    else:
+        statistics.append({
+            "label": "CEFR Proficiency", "value": "<A1"
+        })
+
+    return jsonify(
+        seconds_read=seconds_read,
+        goal_length_minutes = user.goal_length_minutes,
+        read_articles = read_articles,
+        reading_articles = reading_articles,
+        statistics = statistics,
+        achievements = achievements
+    )

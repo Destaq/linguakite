@@ -113,7 +113,9 @@ export default {
 
       this.puzzles = response.data.puzzles;
     },
-    checkAnswers() {
+    async checkAnswers() {
+      await this.$axios.post("/update-quizzes-done");
+      
       this.checkIt = true;
     }
   }

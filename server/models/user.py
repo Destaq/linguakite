@@ -15,6 +15,7 @@ class User(db.Model):
     logs = db.relationship("Log", back_populates="user")
 
     quizzes_done = db.Column(db.Integer, default=0)  # used for statistics
+    goal_length_minutes = db.Column(db.Integer, default=15)
 
     def __init__(self, name, email, password):
         self.name = name

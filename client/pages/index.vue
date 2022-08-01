@@ -1,6 +1,91 @@
 <template>
-  <div v-if="$auth.loggedIn">
+  <div v-if="$auth.loggedIn" class="grid grid-rows-6 px-12">
+    <div class="grid-cols-2 grid h-12 mt-2">
+      <p class="text-2xl font-semibold">Hi {{ $auth.user }}!</p>
+      <div class="justify-self-end">
+        <progress class="progress w-56 mr-2" :value="Math.round(userSecondsRead / (userGoalLengthMinutes * 60) * 100)"
+          max="100"></progress>
+        <div class="inline h-full text-gray-700 font-light font-serif align-middle">{{
+            Math.round(userSecondsRead / (userGoalLengthMinutes * 60) * 100)
+        }}% of {{ userGoalLengthMinutes }} min daily goal<label class="inline cursor-pointer modal-button"
+            for="edit-goal-modal"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline ml-1 cursor-pointer"
+              viewBox="0 0 20 20" fill="currentColor">
+              <path
+                d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+          </label>
 
+          <input type="checkbox" id="edit-goal-modal" class="modal-toggle" ref="editGoalInput" />
+          <label for="edit-goal-modal" class="modal cursor-pointer font-sans">
+            <label class="modal-box relative" for="">
+              <h3 class="text-lg font-bold">Edit Daily Reading Goal</h3>
+              <p class="py-4">Current goal is set for {{ userGoalLengthMinutes }} minutes. How many minutes would you
+                like to set your new daily goal to?</p>
+              <div class="flex justify-between">
+                <input type="number" class="w-full px-4 py-2 text-center input input-bordered rounded-none mr-4"
+                  v-model="newGoalInput" :placeholder="userGoalLengthMinutes" />
+                <button class="btn btn-secondary text-white font-bold py-2 px-4 rounded-none"
+                  @click="updateGoal">Update</button>
+              </div>
+            </label>
+          </label>
+
+          <!-- add in today's date -->
+          <p class="ml-4 inline font-bold font-sans align-middle">{{ new Date().toLocaleDateString() }}</p>
+        </div>
+      </div>
+      <p v-if="Object.keys(pickup).length !== 0" class="text-lg mt-4">Let's pick up where you left off: <a
+          :href="'/read/' + pickup.id" class="link">{{ pickup.title }}, page {{ pickup.currentPage }}</a> ~</p>
+      <p v-else class="text-lg mt-4">No recent books — let's <NuxtLink class="link" to="/database">go</NuxtLink> find a
+        new
+        one
+        ~
+      </p>
+    </div>
+    <div class="grid grid-cols-2 gap-x-12 mt-12 row-span-5">
+      <div class="bg-gray-50 rounded-lg border p-4 h-5/6">
+        <p class="font-semibold text-center">History</p>
+        <div class="tabs grid grid-cols-2 w-full place-self-start">
+          <a class="tab tab-bordered" :class="historyView === 'Reading' ? 'tab-active' : ''"
+            @click="historyView = 'Reading'">Reading</a>
+          <a class="tab tab-bordered" :class="historyView === 'Finished' ? 'tab-active' : ''"
+            @click="historyView = 'Finished'">Finished</a>
+        </div>
+        <div class="overflow-auto mt-2 max-h-96">
+          <p class="font-light my-1 font-serif" v-for="article in readingArticles" :key="article.id"
+            v-if="historyView === 'Reading'">
+            - <NuxtLink class="link link-accent" :to="'/read/' + article.id">{{ article.title }}</NuxtLink>
+            &nbsp;&nbsp;<span class="text-gray-600">pg. {{ article.currentPage }} / {{ article.totalPages }}</span>
+          </p>
+          <p class="font-light my-1 list-decimal font-serif" v-for="(article, index) in readArticles" :key="index"
+            v-if="historyView === 'Finished'">
+            - <NuxtLink class="link link-primary" :to="'/read/' + article.id">{{ article.title }}</NuxtLink>
+          </p>
+        </div>
+      </div>
+      <div class="bg-gray-50 rounded-lg border p-4 h-5/6 flex-1">
+        <p class="font-semibold text-center">Data</p>
+        <div class="tabs grid grid-cols-2 w-full place-self-start">
+          <a class="tab tab-bordered" :class="dataView === 'Statistics' ? 'tab-active' : ''"
+            @click="dataView = 'Statistics'">Statistics</a>
+          <a class="tab tab-bordered" :class="dataView === 'Achievements' ? 'tab-active' : ''"
+            @click="dataView = 'Achievements'">Achievements</a>
+        </div>
+        <div class="overflow-auto mt-2 max-h-96">
+          <p class="font-light my-1 font-serif" v-for="statistic in statistics" :key="statistics.label"
+            v-if="dataView === 'Statistics'">
+            {{ statistic.label }}: {{ statistic.value }}
+          </p>
+          <p class="font-light my-1 font-serif" v-for="achievement in achievements" :key="achievement[0]"
+            v-if="dataView === 'Achievements'">
+            {{ achievement[0] }}
+            <span class="tooltip tooltip-right" :data-tip="achievement[1]">
+              <span class="text-gray-600">(?)</span>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
   <div v-else>
     <!-- Landing Page -->
@@ -503,8 +588,47 @@ export default {
     };
   },
   components: { PracticePuzzle },
+  async fetch() {
+    const authToken = this.$auth.strategies.cookie.token.$storage._state["_token.cookie"];
+    const info = await this.$axios.get("/api/user-info",
+      {
+        headers: {
+          Authorization: authToken,
+        },
+      });
+
+    this.userSecondsRead = info.data.seconds_read;
+    this.userGoalLengthMinutes = info.data.goal_length_minutes;
+    this.readArticles = info.data.read_articles;
+    this.readingArticles = info.data.reading_articles;
+    this.statistics = info.data.statistics;
+    this.achievements = info.data.achievements;
+
+    // pickup is a random choice from readingArticles, only if readingArticles.length > 0
+    if (this.readingArticles.length > 0) {
+      this.pickup = this.readingArticles[Math.floor(Math.random() * this.readingArticles.length)];
+    }
+  },
   data() {
     return {
+      userSecondsRead: 0,
+      userGoalLengthMinutes: 0,
+      readArticles: [
+        // { id: 100, title: "Moby-Dick" },
+      ],
+      readingArticles: [
+        // same as above but with current pages + total pages
+      ],
+      statistics: [
+        // { label: 'All Time Reading', value: '67 min' }...
+      ],
+      achievements: [], // calculated server-side from set list
+      pickup: {
+        // id and title random unfinished book in library
+      },
+      historyView: 'Reading',
+      dataView: 'Statistics',
+      newGoalInput: '',
       samplePuzzle1: {
         "answer": "125364", "context": " ... without us.", "question": ["Life", "will", "with", "or", "continue", "us"], "type": "Order Words"
       },
@@ -512,6 +636,16 @@ export default {
         "answer": "done", "options": ["practice", "cause", "act", "done"], "question": "We’ve _____ a poor job at marketing the climate crisis to selfish human beings .", "type": "Multiple Choice"
       },
       samplePuzzle3: { "answer": "conforming with or constituting a norm or standard or level or type or social norm; not abnormal", "question": "Define 'normal' in the context: \"The problem was never just warming — it was about a disruption in the normal, habitable range of our planet’s climate.\"", "type": "Define" }
+    }
+  },
+  methods: {
+    async updateGoal() {
+      await this.$axios.post("/api/update-daily-goal", {
+        minutes: this.newGoalInput
+      });
+
+      this.userGoalLengthMinutes = this.newGoalInput;
+      this.$refs.editGoalInput.checked = false;
     }
   }
 }
