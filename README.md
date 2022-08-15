@@ -44,7 +44,7 @@ Linguakite is currently not hosted anywhere, as there would be a database fee. T
 5. Run `psql databasename < server/data/db_dump.sql` in your command line to import all the data (this is a couple thousand articles with data already pre-computed).
 6. Install [Node](https://nodejs.org/en/download/) and Python 3 (the latter of which should already be with most systems).
 7. Install the client libraries: `cd client` and then `npm install` (this may take a while).
-8. Install the server libraries: `cd ../server` and then `pip3 install`.
+8. Install the server libraries: `cd ../server` and then `pip3 install -r requirements.txt`.
 9. Create environment variable files:
     ```
     # server/.env
