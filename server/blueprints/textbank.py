@@ -492,7 +492,11 @@ def get_user_info():
     log_match = Log.query.filter(
         Log.user_id == current_user.id,
         Log.date == today_date).first()
-    seconds_read = log_match.elapsed_time_seconds
+
+    if log_match:
+        seconds_read = log_match.elapsed_time_seconds
+    else:
+        seconds_read = 0
 
     # get all of the articles that the user has read
     # where current_page = total_pages (it is complete)
