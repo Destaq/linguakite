@@ -159,7 +159,7 @@ export default {
         type: this.simplificationType
       },
       headers: {
-        Authorization: authToken,
+        Authorization: authToken !== undefined ? authToken : "",
       },
     });
 

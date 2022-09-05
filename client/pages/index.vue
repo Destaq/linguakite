@@ -593,7 +593,7 @@ export default {
     const info = await this.$axios.get("/api/user-info",
       {
         headers: {
-          Authorization: authToken,
+          Authorization: authToken !== undefined ? authToken : "",
         },
       });
 

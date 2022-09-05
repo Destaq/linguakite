@@ -94,7 +94,7 @@ export default {
           usedIds: this.texts.map(text => text.id),
         },
         headers: {
-          Authorization: authToken,
+          Authorization: authToken !== undefined ? authToken : "",
         },
       })
       this.texts = response.data.texts;

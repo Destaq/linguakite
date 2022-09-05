@@ -94,7 +94,7 @@ export default {
           page: this.currentPage,
         },
         headers: {
-          Authorization: authToken,
+          Authorization: authToken !== undefined ? authToken : "",
         },
       })
       this.words = response.data.words;
@@ -129,7 +129,7 @@ export default {
             page: page,
           },
           headers: {
-            Authorization: authToken,  // usually not required, just because called from fetch()
+            Authorization: authToken !== undefined ? authToken : "",
           },
         }
       );

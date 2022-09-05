@@ -81,7 +81,7 @@ export default {
     const authToken = this.$auth.strategies.cookie.token.$storage._state["_token.cookie"];
     const response = await this.$axios.get("/api/get-user-library", {
       headers: {
-        Authorization: authToken,
+        Authorization: authToken !== undefined ? authToken : "",
       },
     });
 

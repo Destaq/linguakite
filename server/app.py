@@ -76,7 +76,7 @@ def create_app():
         try:
             exp_timestamp = get_jwt()["exp"]
             now = datetime.now(timezone.utc)
-            target_timestamp = datetime.timestamp(now + timedelta(days=7))
+            target_timestamp = datetime.timestamp(now + timedelta(days=7))  # less than 7 days from expiring
             if target_timestamp > exp_timestamp:
                 access_token = create_access_token(identity=get_jwt_identity())
                 access_token = "Bearer " + access_token

@@ -23,9 +23,7 @@ export default {
   css: [],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
-  plugins: [
-    { src: "~/plugins/axios", mode: "client" },
-  ],
+  plugins: [{ src: "~/plugins/axios", mode: "client" }],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
@@ -41,11 +39,14 @@ export default {
     host: "127.0.0.1", // run on this port so that cookies are set
   },
 
+  
+
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     // https://go.nuxtjs.dev/axios
     "@nuxtjs/axios",
     "@nuxtjs/auth-next",
+    ['cookie-universal-nuxt', { alias: 'cookiz' }],
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
@@ -67,6 +68,14 @@ export default {
       logout: "/login",
       callback: "/login",
     },
+    options: {
+      cookie: {
+        options: {
+          maxAge: 60 * 60 * 24 * 14,
+          expires: 14, // and refreshed in 7-day window
+        },
+      },
+    },
     strategies: {
       local: false,
       cookie: {
@@ -85,11 +94,15 @@ export default {
           user: { url: "/api/auth/user", method: "get" },
         },
         options: {
-          expires: 14,
-        }
+          maxAge: 60 * 60 * 24 * 14,
+          expires: 14, // has no effect
+        },
       },
     },
   },
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {},
+  router: {
+    middleware: [ 'remember' ] // remember-me functionality
+  }
 };
