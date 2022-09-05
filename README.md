@@ -83,6 +83,17 @@ All permissively licensed.
 - If you are unable to login/register after the server stopped, restart your browser and you will be able to login again.
 - The site has been styled to work on a computer screen and UI will hence be best from a laptop/computer/monitor/large tablet.
 
+To support remember-me, you'll have to modify the @nuxtjs/auth-next module. `runtime.mjs` and `runtime.js` should have the `setCookie()` call in the `setUniversal()` function of their `Storage` class rewritten as follows:
+
+```js
+this.setCookie(key, value, {
+    maxAge: 60 * 60 * 24 * <day-length>,
+    expires: new Date(Date.now() + 60 * 60 * 24 * <day-length>)
+});
+```
+
+where `<day-length>` is how long you want the remember-me to work (e.g. by comparing with your server token expiration time).
+
 ## Contributing
 
 You are free to download, modify, or fork the project for non-commercial purposes.

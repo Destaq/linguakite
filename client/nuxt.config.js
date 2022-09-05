@@ -83,6 +83,7 @@ export default {
           property: "token",
           required: true,
           type: "Bearer",
+          maxAge: 60 * 60 * 24 * 14,
         },
         user: {
           property: "user",
@@ -102,7 +103,4 @@ export default {
   },
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {},
-  router: {
-    middleware: [ 'remember' ] // remember-me functionality
-  }
 };
