@@ -29,7 +29,7 @@
           </td>
           <td>{{ word.translation }}</td>
           <td>{{ word.number_of_times_seen }}</td>
-          <td>{{ word.lemma_rank }}</td>
+          <td>{{ word.lemma_rank < 60000 ? word.lemma_rank : "60000+" }}</td>
           <td>
             <button class="btn btn-circle btn-outline btn-xs btn-accent" @click="deleteWord(word.lemma)">
               <!-- delete the userword association for this lemma and this user (includes times seen) -->
@@ -121,6 +121,7 @@ export default {
       this.renderWordbank(this.currentPageCopy);
     },
     async renderWordbank(page = 1) {
+      page = parseInt(page); // ensure no text being put in from page jumping
       // rerender wordbank whenever this runs (as only 20 words are received from server)
       const authToken = this.$auth.strategies.cookie.token.$storage._state["_token.cookie"];
       const response = await this.$axios.get("/api/fetch-wordbank",
