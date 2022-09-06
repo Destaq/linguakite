@@ -27,11 +27,17 @@
           </div>
           <div class="whitespace-pre-line fle flex-1 overflow-y-auto my-2" v-if="chunks.length !== 0">
             <span v-for="(word, index) in chunks[currentPage - 1]" :key="index">
-              <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
-                :data-end="word.word[0]" v-if="index === 0 && currentPage > 1">{{ word.word.slice(2, word.word.length)
-                }}</span>
-              <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
-                :data-end="word.word[0]" v-else>{{ word.word.slice(1, word.word.length) }}</span>
+              <span v-if="index === 0 && currentPage > 1">
+                <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
+                  v-if="index === 0 && currentPage > 1">{{ word.word.slice(2, word.word.length)
+                  }}</span>
+                <span v-if="index === 0 && currentPage > 1">{{ word.word[0] }}</span>
+              </span>
+              <span v-else>
+                <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)">{{ word.word.slice(1,
+                word.word.length) }}</span>
+                <span>{{ word.word[0] }}</span>
+              </span>
             </span>
           </div>
 
@@ -327,7 +333,7 @@ export default {
 
             if (words[i].charAt(0) === "\n" && this.simplificationType === "Synonymized Text") {
               words[i] = words[i].charAt(0) + words[i].charAt(1).toUpperCase() + words[i].slice(2);
-            } else{
+            } else {
               words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
             }
           }
@@ -382,27 +388,27 @@ export default {
       this.fetchFinished = true;
     },
     wordStyling(word) {
-      let output = word.known ? 'bg-normal underline decoration-2' : 'bg-red-400 underline decoration-2';
+      let output = word.known ? 'bg-normal hover:underline decoration-2' : 'bg-red-400 hover:underline decoration-2';
       if (word.rank < 100) {
-        output += " decoration-violet-900";
+        output += " hover:decoration-violet-900";
       } else if (word.rank < 250) {
-        output += " decoration-sky-900";
+        output += " hover:decoration-sky-900";
       } else if (word.rank < 500) {
-        output += " decoration-green-900";
+        output += " hover:decoration-green-900";
       } else if (word.rank < 1000) {
-        output += " decoration-lime-400"
+        output += " hover:decoration-lime-400"
       } else if (word.rank < 2500) {
-        output += " decoration-yellow-700"
+        output += " hover:decoration-yellow-700"
       } else if (word.rank < 5000) {
-        output += " decoration-amber-800"
+        output += " hover:decoration-amber-800"
       } else if (word.rank < 10000) {
-        output += " decoration-orange-800"
+        output += " hover:decoration-orange-800"
       } else if (word.rank < 25000) {
-        output += " decoration-red-400"
+        output += " hover:decoration-red-400"
       } else if (word.rank < 60000) {
-        output += " decoration-pink-500"
+        output += " hover:decoration-pink-500"
       } else {
-        output += " decoration-stone-800"
+        output += " hover:decoration-stone-800"
       }
       return output;
     }
@@ -417,10 +423,10 @@ export default {
 
 .bg-red-400::after {
   @apply bg-gray-50;
-  content: attr(data-end);
+  /* content: attr(data-end); */
 }
 
 .bg-normal::after {
-  content: attr(data-end);
+  /* content: attr(data-end); */
 }
 </style>
