@@ -80,15 +80,31 @@
           <div class="h-1.5"></div>
         </div>
         <div class="grid grid-rows-3 h-full">
-          <div class="row-span-2 mt-2">
-            <p>{{ clickedWord }}<span v-if="clickedWordTranslation !== ''"> — {{ clickedWordTranslation }}</span><span
-                v-if="clickedWordRank !== ''"> — #{{ clickedWordRank }}</span></p>
-            <p class="italic font-light mt-2">{{ clickedWordDefinition }}</p>
-            <button class="btn btn-secondary btn-xs rounded-sm w-full mt-4" @click="getPronunciation"
-              v-if="clickedWord !== ''">Pronunciation</button>
-            <button class="btn btn-accent btn-xs rounded-sm w-full mt-2" @click="toggleWord"
-              v-if="clickedWord !== ''">Mark as&nbsp;<span v-if="known === false">known</span><span
-                v-else>unknown</span></button>
+          <div class="row-span-2 mt-2 grid grid-rows-3 h-full">
+            <div class="row-span-2 mt-2 h-full">
+              <p>{{ clickedWord }}<span v-if="clickedWordTranslation !== ''"> — {{ clickedWordTranslation }}</span><span
+                  v-if="clickedWordRank !== ''"> — #{{ clickedWordRank }}</span></p>
+              <p class="italic font-light mt-2">{{ clickedWordDefinition }}</p>
+              <button class="btn btn-secondary btn-xs rounded-sm w-full mt-4" @click="getPronunciation"
+                v-if="clickedWord !== ''">Pronunciation</button>
+              <button class="btn btn-accent btn-xs rounded-sm w-full mt-2" @click="toggleWord"
+                v-if="clickedWord !== ''">Mark as&nbsp;<span v-if="known === false">known</span><span
+                  v-else>unknown</span></button>
+            </div>
+            <div class="p-4 border-t items-center text-md text-neutral-600">
+              <p class="font-bold underline mx-auto text-center mb-2">Frequency Rank Legend</p>
+              <div class="grid grid-cols-3 grid-rows-3 items-center text-center font-light decoration-2">
+                <p class="underline decoration-violet-900">&lt;100</p>
+                <p class="underline decoration-sky-400">&lt;500</p>
+                <p class="underline decoration-green-400">&lt;1000</p>
+                <p class="underline decoration-lime-700">&lt;2500</p>
+                <p class="underline decoration-yellow-400">&lt;5000</p>
+                <p class="underline decoration-amber-600">&lt;10000</p>
+                <p class="underline decoration-red-400">&lt;25000</p>
+                <p class="underline decoration-pink-800">&lt;60000</p>
+                <p class="underline decoration-stone-800">60000+</p>
+              </div>
+            </div>
           </div>
           <blockquote class="relative p-4 border-t items-center text-md italic text-neutral-600 border-neutral-500">
             <p class="mb-4">{{ quoteData.q }}</p>
@@ -388,25 +404,23 @@ export default {
       this.fetchFinished = true;
     },
     wordStyling(word) {
-      let output = word.known ? 'bg-normal hover:underline decoration-2' : 'bg-red-400 hover:underline decoration-2';
+      let output = word.known ? 'bg-normal hover:underline decoration-2 decoration-solid' : 'bg-red-400 hover:underline decoration-2 decoration-solid';
       if (word.rank < 100) {
         output += " hover:decoration-violet-900";
-      } else if (word.rank < 250) {
-        output += " hover:decoration-sky-900";
       } else if (word.rank < 500) {
-        output += " hover:decoration-green-900";
+        output += " hover:decoration-sky-400";
       } else if (word.rank < 1000) {
-        output += " hover:decoration-lime-400"
+        output += " hover:decoration-green-400"
       } else if (word.rank < 2500) {
-        output += " hover:decoration-yellow-700"
+        output += " hover:decoration-lime-700"
       } else if (word.rank < 5000) {
-        output += " hover:decoration-amber-800"
+        output += " hover:decoration-yellow-400"
       } else if (word.rank < 10000) {
-        output += " hover:decoration-orange-800"
+        output += " hover:decoration-amber-600"
       } else if (word.rank < 25000) {
         output += " hover:decoration-red-400"
       } else if (word.rank < 60000) {
-        output += " hover:decoration-pink-500"
+        output += " hover:decoration-pink-800"
       } else {
         output += " hover:decoration-stone-800"
       }
@@ -423,10 +437,6 @@ export default {
 
 .bg-red-400::after {
   @apply bg-gray-50;
-  /* content: attr(data-end); */
-}
-
-.bg-normal::after {
   /* content: attr(data-end); */
 }
 </style>
