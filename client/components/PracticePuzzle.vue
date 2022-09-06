@@ -15,7 +15,8 @@
     <div v-if="puzzle['type'] === 'Multiple Choice'">
       <div class="grid grid-cols-4 gap-x-2 form-control">
         <div v-for="(option, index) in puzzle['options']" :key="index">
-          <label class="label w-2/3 mx-auto cursor-pointer border-secondary mt-2" :class="userAnswer === option ? 'font-bold underline' : ''">
+          <label class="label w-2/3 mx-auto cursor-pointer border-secondary mt-2"
+            :class="userAnswer === option ? 'font-bold underline' : ''">
             <input type="radio" :value="option" class="invisible w-0" v-model="userAnswer" />
             <span class="label-text mx-auto">{{ option }}</span>
           </label>
@@ -35,6 +36,16 @@
       <p class="font-medium mt-3 ml-0.5 text-sm">
         Answer <span v-if="puzzle['type'] === 'Define'">(check manually)</span>: {{ puzzle['answer'] }}
       </p>
+      <div class="form-control grid grid-cols-2 w-1/4 -ml-0.5" v-if="puzzle['type'] === 'Define'">
+        <label class="label cursor-pointer w-min" @click="setAnswerCorrectness(true)">
+          <span class="label-text mr-2">Correct</span>
+          <input type="radio" :name="String(puzzleIndex)" class="radio radio-sm checked:bg-success" />
+        </label>
+        <label class="label cursor-pointer w-min" @click="setAnswerCorrectness(false)">
+          <span class="label-text mr-2">Incorrect</span>
+          <input type="radio" :name="String(puzzleIndex)" class="radio radio-sm checked:bg-error" />
+        </label>
+      </div>
     </div>
   </div>
 </template>
@@ -45,11 +56,20 @@ export default {
     return {
       userAnswer: "",
       answerCorrect: false,
+      defineCorrect: false,
+      showDefineCorrectness: false,
     }
   },
-  props: ["puzzle", "puzzleNumber", "checkIt"],
+  props: ["puzzle", "puzzleNumber", "checkIt", "puzzleIndex"],
+  methods: {
+    setAnswerCorrectness: function (truthy) {
+      this.defineCorrect = truthy;
+      this.showDefineCorrectness = true;
+    }
+  },
   computed: {
     computedBackground() {
+      if (this.answerCorrect === true) { };
       if (this.checkIt) {
         if (this.puzzle['type'] === 'Multiple Choice') {
           if (this.puzzle['answer'] === this.userAnswer) {
@@ -65,7 +85,15 @@ export default {
             this.answerCorrect = false;
             return "bg-red-200"
           }
-        } else {
+        } else { // define-type question, allow for manual clicking
+          if (this.showDefineCorrectness === true) {
+            if (this.defineCorrect === true) {
+              return "bg-green-200"
+            } else {
+              this.answerCorrect = false;
+              return "bg-red-200"
+            }
+          }
           return "bg-yellow-100"
         }
       } else {

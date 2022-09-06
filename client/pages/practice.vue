@@ -45,7 +45,7 @@
       <!-- submit -->
       <button class="btn btn-secondary btn-sm w-full mt-4 rounded-none" type="submit">Generate</button>
     </form>
-    <PracticePuzzle v-for="(puzzle, index) in puzzles" :puzzle="puzzle" :puzzleNumber="index + 1" :key="index" :checkIt="checkIt" />
+    <PracticePuzzle v-for="(puzzle, index) in puzzles" :puzzle="puzzle" :puzzleNumber="index + 1" :key="index" :checkIt="checkIt" :puzzleIndex="index" />
 
     <div class="w-full items-center flex mt-4">
       <button class="btn btn-accent btn-sm w-4/5 rounded-none mx-auto items-center" @click="checkAnswers">Check
