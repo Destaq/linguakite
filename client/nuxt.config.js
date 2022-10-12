@@ -39,7 +39,7 @@ export default {
     host: "127.0.0.1", // run on this port so that cookies are set
   },
 
-  
+
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
@@ -47,6 +47,7 @@ export default {
     "@nuxtjs/axios",
     "@nuxtjs/auth-next",
     ['cookie-universal-nuxt', { alias: 'cookiz' }],
+    '@nuxtjs/sitemap',
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios

@@ -11,6 +11,7 @@
   "dependencies": {
     "@nuxtjs/auth-next": "5.0.0-1624817847.21691f1",
     "@nuxtjs/axios": "^5.13.6",
+    "@nuxtjs/sitemap": "^2.4.0",
     "@tailwindcss/typography": "^0.5.4",
     "cookie-universal-nuxt": "^2.2.2",
     "core-js": "3.17.3",
