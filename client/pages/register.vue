@@ -36,7 +36,7 @@
               </div>
             </div>
             <div class="flex flex-col pt-4">
-              <label for="name" class="text-lg text-neutral">name</label>
+              <label for="name" class="text-lg text-neutral">Name</label>
               <input type="text" id="name" v-model="name" placeholder="johndoe" class="
                   shadow
                   appearance-none
@@ -160,7 +160,7 @@ export default {
       if (this.password !== this.confirmpassword) {
         this.showError("Passwords do not match.");
       } else if (this.name.length < 3) {
-        this.showError("name must be at least 3 characters.");
+        this.showError("Name must be at least 3 characters.");
       } else if (this.name.indexOf(" ") >= 0 || /\d/.test(this.name)) {
         this.showError(
           "name can only contain letters, hyphens, and underscores."

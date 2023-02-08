@@ -29,7 +29,8 @@ def get_summary(paragraph):
                 word_frequencies[word] = 1
             else:
                 word_frequencies[word] += 1
-        maximum_frequncy = max(word_frequencies.values())
+
+    maximum_frequncy = max(word_frequencies.values())
 
     for word in word_frequencies.keys():
         word_frequencies[word] = (word_frequencies[word]/maximum_frequncy)

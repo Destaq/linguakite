@@ -3,3 +3,4 @@
 
 server/.env
 server/data/medium_articles.csv
+.idea/*

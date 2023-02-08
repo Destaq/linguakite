@@ -40,15 +40,20 @@ def register():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     """
-    Login user
+    Login user using cookies from frontend.
     """
-    data = request.get_json()
+    data = request.get_json()  # parse request JSON
+
+    # Read relevant data from JSON.
     email = data.get("email")
     password = data.get("password")
 
+    # Check database for a user with a matching email and password.
     user = User.query.filter_by(email=email).first()
 
+    # Improved security: only compares and stores the password hash; never the password itself.
     if user and user.verify_password(password):
+        # Generate two-week login token.
         token = create_access_token(identity=user)
         return jsonify(message="Login successful", token=token), 200
     else:

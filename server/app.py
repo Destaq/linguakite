@@ -62,7 +62,6 @@ def create_app():
         return User.query.filter_by(id=identity).one_or_none()
 
     # cookie scheme auto-refresh
-    # NOTE: mention for my post; complexity point
     @app.after_request
     def refresh_expiring_jwts(response):
         """
@@ -74,19 +73,26 @@ def create_app():
         (Note that this will not work just by opening the app, the user also needs to do some actions).
         """
         try:
-            exp_timestamp = get_jwt()["exp"]
+            exp_timestamp = get_jwt()["exp"]  # reads hardcoded expiry time from the authentication cookie
+
             now = datetime.now(timezone.utc)
-            target_timestamp = datetime.timestamp(now + timedelta(days=7))  # less than 7 days from expiring
+
+            # Finds the earliest time at which the cookie should be refreshed.
+            target_timestamp = datetime.timestamp(now + timedelta(days=7))
+
+            # Checks if the token (cookie) has entired the refresh window.
             if target_timestamp > exp_timestamp:
+
+                # Refresh the access token with the current user's identity, and set this as the new cookie.
                 access_token = create_access_token(identity=get_jwt_identity())
                 access_token = "Bearer " + access_token
-                response.set_cookie("auth._token.cookie", access_token, samesite="None", secure=True)  # latter two required to actually set 
-                # set_access_cookies(response, access_token)
+                # NOTE: these precise settings are required to successfully set with CORS
+                response.set_cookie("auth._token.cookie", access_token, samesite="None", secure=True)
             return response
         except (RuntimeError, KeyError) as e:
-            # Case where there is not a valid JWT. Just return the original respone
+            # Case where there is not a valid JWT. Just return the original response
             return response
-        
+            
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(vocab_bp, url_prefix="/api")

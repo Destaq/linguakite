@@ -29,13 +29,16 @@
             <span v-for="(word, index) in chunks[currentPage - 1]" :key="index">
               <span v-if="index === 0 && currentPage > 1">
                 <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)"
-                  v-if="index === 0 && currentPage > 1">{{ word.word.slice(2, word.word.length)
+                  v-if="index === 0 && currentPage > 1">{{
+                    word.word.slice(2, word.word.length)
                   }}</span>
                 <span v-if="index === 0 && currentPage > 1">{{ word.word[0] }}</span>
               </span>
               <span v-else>
-                <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)">{{ word.word.slice(1,
-                word.word.length) }}</span>
+                <span :class="wordStyling(word)" class="cursor-pointer" @click="wordClicked(word)">{{
+                  word.word.slice(1,
+                    word.word.length)
+                }}</span>
                 <span>{{ word.word[0] }}</span>
               </span>
             </span>
@@ -66,7 +69,8 @@
                 @click="updateProgress(-1)">
                 Relearn Article
               </button>
-              <button class="btn col-span-10 btn-sm text-center" v-if="chunks.length > currentPage">Page {{ currentPage
+              <button class="btn col-span-10 btn-sm text-center" v-if="chunks.length > currentPage">Page {{
+                currentPage
               }}</button>
               <button class="btn btn-sm col-span-1" :class="currentPage === chunks.length ? 'btn-disabled' : ''"
                 @click="updateProgress(1)" v-if="chunks.length > 1 && currentPage <= chunks.length">»</button>
@@ -174,7 +178,10 @@ export default {
     next();
   },
   async fetch() {
+    // Fetch the authorization cookie from the global state.
     const authToken = this.$auth.strategies.cookie.token.$storage._state["_token.cookie"];
+
+    // Send an asynchronous request to the API with information about this article.
     const response = await this.$axios.get("/api/read-text", {
       params: {
         id: this.$route.params.id,
@@ -185,17 +192,17 @@ export default {
       },
     });
 
+    // Read information from the API response concerning the article metadata.
     this.title = response.data.title;
     this.content = response.data.content;
     this.currentPage = parseInt(response.data.start_page);
 
-    // NOTE: quite heavy free rate limiting
-    // also fetch from Zen Quotes API
+    // Also fetch an inspiring quote from ZenAPI.
     try {
       const quoteResponse = await this.$axios.get("https://zenquotes.io/api/random");
       this.quoteData = quoteResponse.data[0];
     } catch {
-      // still being rate limited
+      // This try-catch block here is needed due to ZenAPI's rate limiting.
     }
 
     this.splitContentToChunks();
@@ -243,7 +250,6 @@ export default {
     },
     async wordClicked(word) {
       var wordNoPunc = word.word.replace(/[.,\/#!$%\^&\*;:{}=\_`~()\"\'\“]/g, "")
-
       // also if ’ in wordNoPunc, remove it and anything after it
       if (wordNoPunc.includes("’")) {
         wordNoPunc = wordNoPunc.split("’")[0];

@@ -65,7 +65,6 @@ def order_puzzler(inp_type, text, default_elements):
         "context": context,
     }
 
-
     return output
 
 
@@ -171,7 +170,8 @@ def cloze_puzzler(text):
         )
 
         # if we have any floating punctuation, connect it to the word before it with regex
-        # for example, 'by two mathematicians , Stuart Haber and W. Jones' -> 'by two mathematicians, Stuart Haber and W. Jones'
+        # for example, 'by two mathematicians , Stuart Haber and W. Jones' 
+        # # -> 'by two mathematicians, Stuart Haber and W. Jones'
         # so essentially finding floating dots and commas
         question = re.sub(r"\s([',.;?!’]\s)", r"\1", question)
         question = re.sub(r"\’ \s(\S)", r"’\1", question)
@@ -201,7 +201,6 @@ def get_optimized_random_text():
 @practice_bp.route("get-user-library", methods=["GET"])
 @jwt_required()
 def get_user_library():
-
     # get all the texts from the UserTexts where the user is the current user and the text has not been finished
     library = (
         UserText.query.filter_by(user_id=current_user.id)

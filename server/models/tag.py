@@ -8,7 +8,7 @@ class Tag(db.Model):
     __tablename__ = "tag"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, index=True)
+    name = db.Column(db.String, index=True, unique=True)
 
     texts = db.relationship("Text", secondary=text_tag_association_table, back_populates="tags")
 

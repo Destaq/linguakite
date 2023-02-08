@@ -50,7 +50,7 @@
               <input
                 type="text"
                 id="email"
-                placeholder="johndoe"
+                placeholder="john@doe.com"
                 v-model="email"
                 class="
                   shadow

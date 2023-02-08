@@ -1,4 +1,3 @@
-from matplotlib.pyplot import text
 import spacy
 import re
 import deepl
@@ -205,6 +204,7 @@ def assess_comprehension():
     return jsonify(percentage_known=round(percentage_known, 3))
 
 
+# NOTE: may be able to use with an e.g. LucidChart API diagram
 @textbank_bp.route("/read-text", methods=["GET"])
 @jwt_required()
 def read_text():
